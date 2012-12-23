@@ -22,11 +22,11 @@ LOGGER = logging.getLogger('osm-reporter')
 
 app = Flask(__name__)
 
-
 @app.route('/')
 def current_status():
     mySortedUserList = []
     bbox = request.args.get('bbox', config.BBOX)
+    object_type = request.args.get('obj', config.OBJECT_TYPE);
     try:
         coordinates = split_bbox(bbox)
     except ValueError:
@@ -47,8 +47,15 @@ def current_status():
         except urllib2.URLError:
             error = "Bad request. Maybe the bbox is too big!"
         else:
-            mySortedUserList = osm_building_contributions(myFile)
-            error = None
+            if object_type == 'building':
+                mySortedUserList = osm_building_contributions(myFile)
+                error = None
+            elif object_type == 'highway':
+                mySortedUserList = osm_highway_contributions(myFile)
+                error = None
+            else:
+                error = "Unknown object type"
+
 
     myNodeCount, myWayCount = get_totals(mySortedUserList)
 
@@ -63,6 +70,7 @@ def current_status():
         myNodeCount=myNodeCount,
         myUserCount=len(mySortedUserList),
         bbox=bbox,
+        object_type=object_type,
         error=error,
         coordinates=coordinates,
         display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
@@ -140,7 +148,7 @@ def load_osm_document(theFilePath, theUrlPath):
     return myFile
 
 
-def osm_building_contributions(theFile):
+def osm_object_contributions(theFile, object_filter):
     """Compile a summary of user contributions for buildings.
 
     Args:
@@ -156,7 +164,7 @@ def osm_building_contributions(theFile):
     Raises:
         None
     """
-    myParser = OsmParser()
+    myParser = OsmParser(object_filter)
     xml.sax.parse(theFile, myParser)
     myWayCountDict = myParser.wayCountDict
     myNodeCountDict = myParser.nodeCountDict
@@ -183,6 +191,13 @@ def osm_building_contributions(theFile):
                                    d['crew']))
     return mySortedUserList
 
+def osm_building_contributions(theFile):
+    return osm_object_contributions(theFile, 
+                                    lambda a: a.getValue('k') == 'building')
+
+def osm_highway_contributions(theFile):
+    return osm_object_contributions(theFile,
+                                    lambda a: a.getValue('k') == 'highway')
 
 def fetch_osm(theUrlPath, theFilePath):
     """Fetch an osm map and store locally.
