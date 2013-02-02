@@ -18,7 +18,8 @@ from core import (split_bbox,
                   setupLogger,
                   get_totals,
                   osm_object_contributions,
-                  load_osm_document)
+                  load_osm_document,
+                  interpolated_timeline)
 from osm_parser import OsmParser
 
 
@@ -113,6 +114,24 @@ class CoreTestCase(TestCaseLogger):
                                                     tagName="building")
         myWays, myNodes = get_totals(mySortedUserList)
         self.assertEquals((myWays, myNodes), (427, 52))
+
+    def test_interpolated_timeline(self):
+        """Check that we can get an interpolated timeline,"""
+        myTimeline = {u'2012-12-01': 10,
+                      u'2012-12-10': 1}
+        myExpectedResult = [['2012-12-01', 10],
+                            ['2012-12-02', 0],
+                            ['2012-12-03', 0],
+                            ['2012-12-04', 0],
+                            ['2012-12-05', 0],
+                            ['2012-12-06', 0],
+                            ['2012-12-07', 0],
+                            ['2012-12-08', 0],
+                            ['2012-12-09', 0],
+                            ['2012-12-10', 1]]
+        myResult = interpolated_timeline(myTimeline)
+        self.maxDiff = None
+        self.assertListEqual(myExpectedResult, myResult)
 
 
 class OsmParserTestCase(TestCaseLogger):

@@ -4,6 +4,8 @@ import time
 import optparse
 import hashlib
 import xml.sax
+from datetime import date, timedelta
+import time
 
 import logging
 import logging.handlers
@@ -18,6 +20,7 @@ DB_PATH = os.path.join(
     os.path.pardir,
     'reporter.db'
 )
+
 LOGGER = logging.getLogger('osm-reporter')
 
 def get_osm_file(bbox, coordinates):
@@ -226,6 +229,65 @@ def osm_object_contributions(theFile, tagName):
                                    d['crew']))
     return mySortedUserList
 
+def interpolated_timeline(theTimeline):
+    """Interpolate a timeline given a sparse timeline.
+
+    Args:
+        theTimeline: dict - a dictionary of non sequential dates (in
+            YYYY-MM-DD) as keys and values (representing ways collected on that
+            day).
+
+    Returns:
+        dict: An interpolated list where each date in the original
+            input date is present, and all days where no total was provided
+            are added to include that day.
+
+    Given an input looking like this:
+            {
+                {u'2012-09-24': 1},
+                {u'2012-09-21': 10},
+                {u'2012-09-25': 5},
+            }
+
+    The returned list will be in the form:
+            [
+                [u'2012-09-21', 10],
+                [u'2012-09-22', 0],
+                [u'2012-09-23', 0],
+                [u'2012-09-24', 1],
+                [u'2012-09-25', 5],
+            ]
+    """
+    # Work out the earliest and latest day
+    myStartDate = None
+    myEndDate = None
+    for myDate in theTimeline.keys():
+        myYear, myMonth, myDay = myDate.split('-')
+        LOGGER.info('Date: %s' % myDate)
+        myTimelineDate = date(int(myYear), int(myMonth), int(myDay))
+        if myStartDate is None:
+            myStartDate = myTimelineDate
+        if myEndDate is None:
+            myEndDate = myTimelineDate
+        if myTimelineDate < myStartDate:
+            myStartDate = myTimelineDate
+        if myTimelineDate > myEndDate:
+            myEndDate = myTimelineDate
+    # Loop through them, adding an entry for each day
+    myTimeline = []
+    for myDate in daterange(myStartDate, myEndDate):
+        myDateString = time.strftime("%Y-%m-%d", myDate.timetuple())
+        if myDateString in theTimeline:
+            myValue = theTimeline[myDateString]
+        else:
+            myValue = 0
+        myTimeline.append([myDateString, myValue])
+    return myTimeline
+
+def daterange(start_date, end_date):
+    """Given two dates return a collection of dates between start and end."""
+    for n in range(int ((end_date - start_date).days) + 1):
+        yield start_date + timedelta(n)
 
 def fetch_osm(theUrlPath, theFilePath):
     """Fetch an osm map and store locally.
