@@ -14,11 +14,11 @@ import logging
 import logging.handlers
 
 from core import (split_bbox,
-                           app,
-                           setupLogger,
-                           get_totals,
-                           osm_object_contributions,
-                           load_osm_document)
+                  app,
+                  setupLogger,
+                  get_totals,
+                  osm_object_contributions,
+                  load_osm_document)
 from osm_parser import OsmParser
 
 
@@ -36,7 +36,7 @@ class TestCaseLogger(unittest.TestCase):
 
     def failureException(self, msg):
         LOGGER.exception(msg)
-        return self.super(TestCaseLogger, self).failureException(msg)
+        return super(TestCaseLogger, self).failureException(msg)
 
 
 class CoreTestCase(TestCaseLogger):
@@ -104,7 +104,8 @@ class CoreTestCase(TestCaseLogger):
 
     def test_get_totals(self):
         """Test we get the proper totals from a sorted user list."""
-        mySortedUserList = osm_object_contributions(open(FIXTURE_PATH), tagName="building")
+        mySortedUserList = osm_object_contributions(open(FIXTURE_PATH),
+                                                    tagName="building")
         myWays, myNodes = get_totals(mySortedUserList)
         myMessage = 'get_totals test failed.'
         self.assertEquals((myWays, myNodes), (427, 52), myMessage)
@@ -122,6 +123,32 @@ class OsmParserTestCase(TestCaseLogger):
         myExpectedNodeDict = {u'Babsie': 306,
                               u'Firefishy': 104,
                               u'Jacoline': 17}
+        myExpectedTimelineDict = {
+                u'Babsie':      {
+                                    u'2012-12-08': 15,
+                                    u'2012-12-10': 22
+                                },
+                u'Burger':      {
+                                    u'2010-05-16': 1
+                                },
+                u'Firefishy':   {
+                                    u'2012-09-26': 10,
+                                    u'2012-12-08': 15,
+                                    u'2012-12-09': 5,
+                                    u'2012-12-10': 1
+                                },
+                u'Jacoline':    {
+                                    u'2012-12-08': 1,
+                                    u'2012-12-10': 2
+                                },
+                u'thomasF':     {
+                                    u'2012-08-22': 5
+                                },
+                u'timlinux':    {
+                                    u'2010-12-09': 1,
+                                    u'2012-07-10': 1
+                                }
+            }
 
         myMessage = 'OsmParser way count test failed.'
         self.assertDictEqual(myExpectedWayDict,
@@ -132,6 +159,10 @@ class OsmParserTestCase(TestCaseLogger):
         self.assertDictEqual(myExpectedNodeDict,
                              myParser.nodeCountDict,
                              myMessage)
+
+        myMessage = 'OsmParser timeline test failed.'
+        self.assertDictEqual(myExpectedTimelineDict,
+                             myParser.userDayCountDict)
 
 
 class UtilsTestCase(TestCaseLogger):
