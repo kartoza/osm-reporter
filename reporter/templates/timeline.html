@@ -53,7 +53,6 @@
     </div>
     <div class="row">
         <div class="span4">
-            <div id="chart" style="height:300px;"></div>
             <h2>About</h2>
             <p><img src="/static/img/linfiniti-logo-300.png"/></p>
             <p>This application was created by
@@ -89,8 +88,8 @@
                         {% endif %}
                     </td>
                     <td><div id="overview{{ loop.index }}" style="margin-left:50px;
-                    margin-top:20px;width:400px;height:50px"></div>
-                        {# <div>{{ myEntry.timeline|safe }}</div> #} </td>
+                    margin-top:20px;width:400px;height:80px"></div>
+                        {# <div>{{ myEntry.timeline|safe }}</div>  #}</td>
                 {% endfor %}
                 </tbody>
             </table>
@@ -124,98 +123,35 @@
         }).addTo(map);
         window.bbox = map.getBounds().toBBoxString();
     });
-    $(function () {
-        var myData = [
-            {%  for myEntry in mySortedUserList %}
-                {
-                    label: "{{myEntry.name}}",
-                    data: {{ myEntry.ways }},
-                    crew: {{ myEntry.crew|lower }}
-                },
-            {%  endfor %}]
-        var myPlot = $.plot($("#chart"), myData, {
-            series: {
-                pie: {show: true,
-                    tilt: 0.5,
-                    label: {show:true, threshold: 0.05}}
-            },
-            legend: {show: false}
-        });
-    });
 
-//------
 
     $(function () {
-        var data = [];
         {% for myEntry in mySortedUserList %}
         var d{{ loop.index }} = {{ myEntry.timeline|safe }};
-        data.push(d{{ loop.index }});
-        {% endfor %}
-
-        // first correct the timestamps - they are recorded as the daily
-        // midnights in UTC+0100, but Flot always displays dates in UTC
-        // so we have to add one hour to hit the midnights in the plot
-        //for (var i = 0; i < d.length; ++i)
-        //    d[i][0] += 60 * 60 * 1000;
-
-        // helper for returning the weekends in a period
-        function weekendAreas(axes) {
-            var markings = [];
-            var d = new Date(axes.xaxis.min);
-            // go to the first Saturday
-            d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7))
-            d.setUTCSeconds(0);
-            d.setUTCMinutes(0);
-            d.setUTCHours(0);
-            var i = d.getTime();
-            do {
-                // when we don't set yaxis, the rectangle automatically
-                // extends to infinity upwards and downwards
-                markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
-                i += 7 * 24 * 60 * 60 * 1000;
-            } while (i < axes.xaxis.max);
-
-            return markings;
+        for (i=0; i < d{{ loop.index }}.length; i++)
+        {
+            var pair = d{{ loop.index }}[i];
+            console.log(i + "/" + d{{ loop.index }}.length + ":" + pair);
+            var dateString = pair[0];
+            var splitString = dateString.split("-");
+            var year = parseInt(splitString[0]);
+            var month = parseInt(splitString[1]) - 1; //javascript stupidity - base 0 months
+            var day = parseInt(splitString[2]);
+            pair[0] = new Date(year, month, day).getTime();
+            console.log(i + "/" + d{{ loop.index }}.length + ":" + pair);
+            d{{ loop.index }}[i] = pair;
         }
+        //convert each element in labels to jscript date
 
-        //var options = {
-        //    xaxis: { mode: "time", tickLength: 5 },
-        //    selection: { mode: "x" },
-        //    grid: { markings: weekendAreas }
-        //};
-
-        //var plot = $.plot($("#chart"), data, options);
-
-        {% for myEntry in mySortedUserList %}
-            var d{{ loop.index }} = {{ myEntry.timeline|safe }};
-            data.push(d{{ loop.index }});
-
-            var overview{{ loop.index }} = $.plot($("#overview{{ loop.index }}"), [d{{ loop.index }}], {
-                series: {
-                    lines: { show: true, lineWidth: 1 },
-                    shadowSize: 0
-                },
-                xaxis: { ticks: [], mode: "time" },
-                //yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
-                selection: { mode: "x" }
-            });
-            // now connect the two
-            //$("#chart").bind("plotselected", function (event, ranges) {
-            //    // do the zooming
-            //    plot = $.plot($("#chart"), [d{{ loop.index }}],
-            //            $.extend(true, {}, options, {
-            //                xaxis: { min: ranges.xaxis.from,
-            //max: ranges.xaxis.to }
-            //            }));
-
-                // don't fire event on the overview to prevent eternal loop
-            //    overview{{ loop.index }}.setSelection(ranges, true);
-            //});
-
-            //$("#overview{{ loop.index }}").bind("plotselected",
-            //function (event, ranges) {
-            //    plot.setSelection(ranges);
-            //});
+        var overview{{ loop.index }} = $.plot($("#overview{{ loop.index }}"), [d{{ loop.index }}], {
+            series: {
+                lines: { show: true, lineWidth: 1 },
+                shadowSize: 0
+            },
+            xaxis: { mode: "time", timeformat: "%d-%m-%y" },
+            yaxis: { min: 0, autoscaleMargin: 1 },
+            //selection: { mode: "x" }
+        });
 
         {% endfor %}
     });

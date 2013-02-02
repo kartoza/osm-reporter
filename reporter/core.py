@@ -23,6 +23,10 @@ DB_PATH = os.path.join(
 
 LOGGER = logging.getLogger('osm-reporter')
 
+app = Flask(__name__)
+# If you need to debug 500 errors, set debug to True in flask-config.py
+app.config.from_pyfile('flask-config.py')
+
 def get_osm_file(bbox, coordinates):
     # Note bbox is min lat, min lon, max lat, max lon
     myUrlPath = ('http://overpass-api.de/api/interpreter?data='
@@ -33,9 +37,6 @@ def get_osm_file(bbox, coordinates):
         config.CACHE_DIR,
         safe_name)
     return load_osm_document(myFilePath, myUrlPath)
-
-
-app = Flask(__name__)
 
 
 @app.route('/')
@@ -305,11 +306,11 @@ def interpolated_timeline(theTimeline):
 
     The returned list will be in the form:
             [
-                [u'2012-09-21', 10],
-                [u'2012-09-22', 0],
-                [u'2012-09-23', 0],
-                [u'2012-09-24', 1],
-                [u'2012-09-25', 5],
+                [Date(2012,09,21), 10],
+                [Date(2012,09,22), 0],
+                [Date(2012,09,23), 0],
+                [Date(2012,09,24), 1],
+                [Date(2012,09,25), 5],
             ]
     """
     # Work out the earliest and latest day
@@ -328,14 +329,17 @@ def interpolated_timeline(theTimeline):
         if myTimelineDate > myEndDate:
             myEndDate = myTimelineDate
     # Loop through them, adding an entry for each day
-    myTimeline = []
+    myTimeline = '['
     for myDate in daterange(myStartDate, myEndDate):
-        myDateString = time.strftime("%Y-%m-%d", myDate.timetuple())
+        myDateString = time.strftime('%Y-%m-%d', myDate.timetuple())
         if myDateString in theTimeline:
             myValue = theTimeline[myDateString]
         else:
             myValue = 0
-        myTimeline.append([myDateString, myValue])
+        if myTimeline != '[':
+            myTimeline += ','
+        myTimeline += '["%s",%i]' % (myDateString, myValue)
+    myTimeline += ']'
     return myTimeline
 
 def daterange(start_date, end_date):
@@ -474,6 +478,8 @@ def static_file(path):
 if __name__ == '__main__':
     setupLogger()
     parser = optparse.OptionParser()
+    # This doesnt seem to work, flask-config.py option described near the
+    # top of this file does.
     parser.add_option('-d', '--debug', dest='debug', default=False,
                       help='turn on Flask debugging', action='store_true')
 
