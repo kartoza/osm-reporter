@@ -84,7 +84,7 @@ def current_status():
     return render_template('base.html', **context)
 
 @app.route('/timeline')
-def current_status():
+def timeline():
     mySortedUserList = []
     bbox = request.args.get('bbox', config.BBOX)
     tag_name = request.args.get('obj', config.TAG_NAMES[0])
