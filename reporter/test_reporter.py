@@ -96,19 +96,23 @@ class CoreTestCase(TestCaseLogger):
         myFile = open(FIXTURE_PATH)
         myList = osm_object_contributions(myFile, tagName="building")
         myExpectedList = [
-            {'crew': False, 'name': u'Babsie', 'nodes': 306, 'ways': 37},
-            {'crew': False, 'name': u'Firefishy', 'nodes': 104, 'ways': 12},
-            {'crew': False, 'name': u'Jacoline', 'nodes': 17, 'ways': 3}]
-        myMessage = 'osm_building_contributions test failed.'
-        self.assertListEqual(myList, myExpectedList, myMessage)
+            {'crew': False, 'name': u'Babsie', 'nodes': 306, 'ways': 37,
+                'timeline': {u'2012-12-08': 15, u'2012-12-10': 22}},
+            {'crew': False, 'name': u'Firefishy', 'nodes': 104, 'ways': 12,
+             'timeline': {u'2012-09-26': 10,
+                          u'2012-12-08': 15,
+                          u'2012-12-09': 5,
+                          u'2012-12-10': 1},},
+            {'crew': False, 'name': u'Jacoline', 'nodes': 17, 'ways': 3,
+             'timeline': {u'2012-12-08': 1, u'2012-12-10': 2}}]
+        self.assertListEqual(myList, myExpectedList)
 
     def test_get_totals(self):
         """Test we get the proper totals from a sorted user list."""
         mySortedUserList = osm_object_contributions(open(FIXTURE_PATH),
                                                     tagName="building")
         myWays, myNodes = get_totals(mySortedUserList)
-        myMessage = 'get_totals test failed.'
-        self.assertEquals((myWays, myNodes), (427, 52), myMessage)
+        self.assertEquals((myWays, myNodes), (427, 52))
 
 
 class OsmParserTestCase(TestCaseLogger):
@@ -150,17 +154,15 @@ class OsmParserTestCase(TestCaseLogger):
                                 }
             }
 
-        myMessage = 'OsmParser way count test failed.'
+        #OsmParser way count test
         self.assertDictEqual(myExpectedWayDict,
-                             myParser.wayCountDict,
-                             myMessage)
+                             myParser.wayCountDict)
 
-        myMessage = 'OsmParser node count test failed.'
+        #OsmParser node count test
         self.assertDictEqual(myExpectedNodeDict,
-                             myParser.nodeCountDict,
-                             myMessage)
+                             myParser.nodeCountDict)
 
-        myMessage = 'OsmParser timeline test failed.'
+        #OsmParser timeline test
         self.assertDictEqual(myExpectedTimelineDict,
                              myParser.userDayCountDict)
 

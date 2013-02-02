@@ -30,7 +30,7 @@ def get_osm_file(bbox, coordinates):
         config.CACHE_DIR,
         safe_name)
     return load_osm_document(myFilePath, myUrlPath)
-    
+
 
 app = Flask(__name__)
 
@@ -56,6 +56,7 @@ def current_status():
                 error = "Unsupported object type"
             else:
                 mySortedUserList = osm_object_contributions(myFile, tag_name)
+
 
     myNodeCount, myWayCount = get_totals(mySortedUserList)
 
@@ -178,10 +179,20 @@ def osm_object_contributions(theFile, tagName):
     Returns:
         list: a list of dicts where items in the list are sorted from highest
             contributor (based on number of ways) down to lowest. Each element
-            in the list is a dict in the form: { 'user': <user>, 'ways':
-            <way count>, 'nodes': <node count>, 'crew': <bool> } where crew
-            is used to designate users who are part of an active data gathering
-            campaign.
+            in the list is a dict in the form: {
+            'user': <user>,
+            'ways': <way count>,
+            'nodes': <node count>,
+            'timeline': <timelinedict>,
+            'crew': <bool> }
+            where crew is used to designate users who are part of an active
+            data gathering campaign.
+            The timeline dict will contain a collection of dates and
+            the total number of ways created on that date e.g.
+            {
+                u'2010-12-09': 10,
+                u'2012-07-10': 14
+            }
     Raises:
         None
     """
@@ -189,6 +200,7 @@ def osm_object_contributions(theFile, tagName):
     xml.sax.parse(theFile, myParser)
     myWayCountDict = myParser.wayCountDict
     myNodeCountDict = myParser.nodeCountDict
+    myTimeLines = myParser.userDayCountDict
 
     # Convert to a list of dicts so we can sort it.
     myCrewList = config.CREW
@@ -201,6 +213,7 @@ def osm_object_contributions(theFile, tagName):
         myRecord = {'name': myKey,
                     'ways': myValue,
                     'nodes': myNodeCountDict[myKey],
+                    'timeline': myTimeLines[myKey],
                     'crew': myCrewFlag}
         myUserList.append(myRecord)
 
@@ -209,6 +222,7 @@ def osm_object_contributions(theFile, tagName):
         myUserList, key=lambda d: (-d['ways'],
                                    d['nodes'],
                                    d['name'],
+                                   d['timeline'],
                                    d['crew']))
     return mySortedUserList
 
