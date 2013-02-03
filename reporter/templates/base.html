@@ -97,18 +97,26 @@
                                 </td>
                                 <td><input type="checkbox"
                                             value="details{{ loop.index }}"
-                                            class="details-toggle"/>
+                                            class="details-toggle"
+                                            checked=""/>
                                 </td>
                             </tr>
                             <tr id="details{{ loop.index }}"
                                 class="details-row">
                                 <td colspan="6" >
                                     <div style="height: 100px">
-                                    <div id="overview{{ loop.index }}"
+                                        <div id="overview{{ loop.index }}"
                                           style="margin-left:50px;
                                                  margin-top:20px;
                                                  width:500px;
                                                  height:80px"></div>
+                                        <div class="centered">Active days:
+                                            {{ myEntry.activeDays }},
+                                            Start date:
+                                            {{ myEntry.start }},
+                                            End date:
+                                            {{ myEntry.end }}
+                                        </div>
                                     {# <div>{{ myEntry.timeline|safe }}</div>  #}
                                     </div>
                                 </td>
@@ -121,7 +129,8 @@
                               <td>{{ myNodeCount }}</td>
                               <td><button class="clear-hm btn">Clear
                                   HeatMap</button></td>
-                              <td><input type="checkbox" id="all-details"/>
+                              <td><input type="checkbox" id="all-details"
+                                         checked />
                                   Toggle all</td>
                             </tr>
                         </tbody>

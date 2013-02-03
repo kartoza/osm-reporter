@@ -224,10 +224,16 @@ def osm_object_contributions(theFile, tagName):
         myCrewFlag = False
         if myKey in myCrewList:
             myCrewFlag = True
+        myStartDate, myEndDate = date_range(myTimeLines[myKey])
+        myStartDate = time.strftime('%d-%m-%Y', myStartDate.timetuple())
+        myEndDate = time.strftime('%d-%m-%Y', myEndDate.timetuple())
         myRecord = {'name': myKey,
                     'ways': myValue,
                     'nodes': myNodeCountDict[myKey],
                     'timeline': interpolated_timeline(myTimeLines[myKey]),
+                    'start': myStartDate,
+                    'end': myEndDate,
+                    'activeDays': len(myTimeLines[myKey]),
                     'crew': myCrewFlag}
         myUserList.append(myRecord)
 
@@ -237,8 +243,43 @@ def osm_object_contributions(theFile, tagName):
                                    d['nodes'],
                                    d['name'],
                                    d['timeline'],
+                                   d['start'],
+                                   d['end'],
+                                   d['activeDays'],
                                    d['crew']))
     return mySortedUserList
+
+
+def date_range(theTimeline):
+    """Given a timeline, determine the start and end dates.
+
+    Args:
+        theTimeline: dict - a dictionary of non sequential dates (in
+            YYYY-MM-DD) as keys and values (representing ways collected on that
+            day).
+
+    Returns:
+        myStartDate - a date object representing the earliest date in the time
+            line.
+        myEndDate - a date object representing the newest date in the time
+            line.
+    """
+    myStartDate = None
+    myEndDate = None
+    for myDate in theTimeline.keys():
+        myYear, myMonth, myDay = myDate.split('-')
+        LOGGER.info('Date: %s' % myDate)
+        myTimelineDate = date(int(myYear), int(myMonth), int(myDay))
+        if myStartDate is None:
+            myStartDate = myTimelineDate
+        if myEndDate is None:
+            myEndDate = myTimelineDate
+        if myTimelineDate < myStartDate:
+            myStartDate = myTimelineDate
+        if myTimelineDate > myEndDate:
+            myEndDate = myTimelineDate
+    return myStartDate, myEndDate
+
 
 def interpolated_timeline(theTimeline):
     """Interpolate a timeline given a sparse timeline.
@@ -270,23 +311,10 @@ def interpolated_timeline(theTimeline):
             ]
     """
     # Work out the earliest and latest day
-    myStartDate = None
-    myEndDate = None
-    for myDate in theTimeline.keys():
-        myYear, myMonth, myDay = myDate.split('-')
-        LOGGER.info('Date: %s' % myDate)
-        myTimelineDate = date(int(myYear), int(myMonth), int(myDay))
-        if myStartDate is None:
-            myStartDate = myTimelineDate
-        if myEndDate is None:
-            myEndDate = myTimelineDate
-        if myTimelineDate < myStartDate:
-            myStartDate = myTimelineDate
-        if myTimelineDate > myEndDate:
-            myEndDate = myTimelineDate
+    myStartDate, myEndDate = date_range(theTimeline)
     # Loop through them, adding an entry for each day
     myTimeline = '['
-    for myDate in daterange(myStartDate, myEndDate):
+    for myDate in date_range_iterator(myStartDate, myEndDate):
         myDateString = time.strftime('%Y-%m-%d', myDate.timetuple())
         if myDateString in theTimeline:
             myValue = theTimeline[myDateString]
@@ -298,7 +326,7 @@ def interpolated_timeline(theTimeline):
     myTimeline += ']'
     return myTimeline
 
-def daterange(start_date, end_date):
+def date_range_iterator(start_date, end_date):
     """Given two dates return a collection of dates between start and end."""
     for n in range(int ((end_date - start_date).days) + 1):
         yield start_date + timedelta(n)
