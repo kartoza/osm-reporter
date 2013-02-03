@@ -102,13 +102,16 @@
                             </tr>
                             <tr id="details{{ loop.index }}"
                                 class="details-row">
-                                <td colspan="5" >
+                                <td colspan="6" >
+                                    <div style="height: 100px">
                                     <div id="overview{{ loop.index }}"
                                           style="margin-left:50px;
                                                  margin-top:20px;
-                                                 width:400px;
+                                                 width:500px;
                                                  height:80px"></div>
-                                    {# <div>{{ myEntry.timeline|safe }}</div>  #}</td>
+                                    {# <div>{{ myEntry.timeline|safe }}</div>  #}
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                             <tr>
@@ -187,7 +190,6 @@
                     console.log(i + "/" + d{{ loop.index }}.length + ":" + pair);
                     d{{ loop.index }}[i] = pair;
                 }
-                //convert each element in labels to jscript date
 
                 var overview{{ loop.index }} = $.plot($("#overview{{ loop.index }}"), [d{{ loop.index }}], {
                     series: {
@@ -197,6 +199,8 @@
                     xaxis: { mode: "time", timeformat: "%d-%m-%y" },
                     yaxis: { min: 0, autoscaleMargin: 0.1 }
                 });
+                {# Do this last to prevent flot rendering artifacts. #}
+                //$('.details-row').hide();
 
             {% endfor %}
         });

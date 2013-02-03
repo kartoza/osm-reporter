@@ -76,7 +76,7 @@ $(function(){
   });
 
   // Set up detail row hiding etc.
-  $('.details-row').hide();
+
   $('.details-toggle').click(function(e){
         var rowId = $(this).attr("value");
         $("#"+rowId).toggle();
