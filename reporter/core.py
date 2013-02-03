@@ -83,50 +83,6 @@ def current_status():
     )
     return render_template('base.html', **context)
 
-@app.route('/timeline')
-def timeline():
-    mySortedUserList = []
-    bbox = request.args.get('bbox', config.BBOX)
-    tag_name = request.args.get('obj', config.TAG_NAMES[0])
-    error = None
-    try:
-        coordinates = split_bbox(bbox)
-    except ValueError:
-        error = "Invalid bbox"
-        coordinates = split_bbox(config.BBOX)
-    else:
-        try:
-            myFile = get_osm_file(bbox, coordinates)
-        except urllib2.URLError:
-            error = "Bad request. Maybe the bbox is too big!"
-        else:
-            if not tag_name in config.TAG_NAMES:
-                error = "Unsupported object type"
-            else:
-                mySortedUserList = osm_object_contributions(myFile, tag_name)
-
-
-    myNodeCount, myWayCount = get_totals(mySortedUserList)
-
-    # We need to manually cast float in string, otherwise floats are
-    # truncated, and then rounds in Leaflet result in a wrong bbox
-    # Note: split_bbox should better keep returning real floats
-    coordinates = dict((k, repr(v)) for k, v in coordinates.iteritems())
-
-    context = dict(
-        mySortedUserList=mySortedUserList,
-        myWayCount=myWayCount,
-        myNodeCount=myNodeCount,
-        myUserCount=len(mySortedUserList),
-        bbox=bbox,
-        current_tag_name=tag_name,
-        available_tag_names=config.TAG_NAMES,
-        error=error,
-        coordinates=coordinates,
-        display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
-        )
-    return render_template('timeline.html', **context)
-
 @app.route('/user')
 def user_status():
     """Get nodes for user as a json doc.
