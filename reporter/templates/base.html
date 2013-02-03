@@ -71,7 +71,8 @@
                                 <th>Name</th>
                                 <th>Way Count</th>
                                 <th>Node Count</th>
-                                <th>HeatMap View<th>
+                                <th>Show HeatMap</th>
+                                <th>Show Details</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,9 +95,15 @@
                                            class="view-hm"
                                        data-user="{{ myEntry.name }}">
                                 </td>
+                                <td><input type="checkbox"
+                                            value="details{{ loop.index }}"
+                                            class="details-toggle"/>
+                                </td>
                             </tr>
-                            <tr>
-                                <td colspan="5"><div id="overview{{ loop.index }}"
+                            <tr id="details{{ loop.index }}"
+                                class="details-row">
+                                <td colspan="5" >
+                                    <div id="overview{{ loop.index }}"
                                           style="margin-left:50px;
                                                  margin-top:20px;
                                                  width:400px;
@@ -109,7 +116,10 @@
                               <td>{{ myUserCount }}</td>
                               <td>{{ myWayCount }}</td>
                               <td>{{ myNodeCount }}</td>
-                              <td><button class="clear-hm btn">Clear HeatMap</button></td>
+                              <td><button class="clear-hm btn">Clear
+                                  HeatMap</button></td>
+                              <td><input type="checkbox" id="all-details"/>
+                                  Toggle all</td>
                             </tr>
                         </tbody>
                     </table>
