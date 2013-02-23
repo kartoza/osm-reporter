@@ -13,13 +13,16 @@ from reporter.utilities import (
     get_totals,
     osm_object_contributions,
     interpolated_timeline,
-    average_for_active_days)
+    average_for_active_days,
+    best_active_day,
+    worst_active_day)
 
 
 class UtilitiesTestCase(LoggedTestCase):
     """Test the reporting functions which are the heart of this app."""
 
     def test_split_bbox(self):
+        """Test we can split a bounding box nicely."""
         myMessage = 'test_split_box failed.'
         self.assertEqual(
             split_bbox('106.78674459457397,-6.141301491467023,'
@@ -34,6 +37,7 @@ class UtilitiesTestCase(LoggedTestCase):
         )
 
     def test_split_bad_bbox(self):
+        """Test we can handle bad bounding boxes nicely."""
         with self.assertRaises(ValueError):
             split_bbox('invalid bbox string')
 
@@ -82,4 +86,20 @@ class UtilitiesTestCase(LoggedTestCase):
                       u'2012-12-10': 1}
         myExpectedResult = 5
         myResult = average_for_active_days(myTimeline)
+        self.assertEqual(myExpectedResult, myResult)
+
+    def test_best_active_day(self):
+        """Check that we can determine the best active day."""
+        myTimeline = {u'2012-12-01': 10,
+                      u'2012-12-10': 1}
+        myExpectedResult = 10
+        myResult = best_active_day(myTimeline)
+        self.assertEqual(myExpectedResult, myResult)
+
+    def test_worst_active_day(self):
+        """Check that we can determine the worst active day."""
+        myTimeline = {u'2012-12-01': 10,
+                      u'2012-12-10': 1}
+        myExpectedResult = 1
+        myResult = worst_active_day(myTimeline)
         self.assertEqual(myExpectedResult, myResult)

@@ -6,6 +6,7 @@
 
 import urllib2
 import optparse
+import xml
 
 from flask import request, jsonify, render_template
 # App declared directly in __init__ as per
@@ -45,7 +46,14 @@ def home():
             if not myTagName in config.TAG_NAMES:
                 error = "Unsupported object type"
             else:
-                mySortedUserList = osm_object_contributions(myFile, myTagName)
+                try:
+                    mySortedUserList = osm_object_contributions(
+                        myFile, myTagName)
+                except xml.sax.SAXParseException:
+                    error = (
+                        'Invalid OSM xml file retrieved. Please try again '
+                        'later.')
+
 
     myNodeCount, myWayCount = get_totals(mySortedUserList)
 
