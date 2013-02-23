@@ -1,16 +1,41 @@
+# coding=utf-8
+"""Test cases for the Utilities module.
+:copyright: (c) 2013 by Tim Sutton
+:license: GPLv3, see LICENSE for more details.
+"""
 import os
 import ast
 
 from reporter.test.logged_unittest import LoggedTestCase
 from reporter.test.helpers import FIXTURE_PATH
 from reporter.utilities import (
+    split_bbox,
     get_totals,
     osm_object_contributions,
-    interpolated_timeline)
+    interpolated_timeline,
+    average_for_active_days)
 
 
 class UtilitiesTestCase(LoggedTestCase):
     """Test the reporting functions which are the heart of this app."""
+
+    def test_split_bbox(self):
+        myMessage = 'test_split_box failed.'
+        self.assertEqual(
+            split_bbox('106.78674459457397,-6.141301491467023,'
+                       '106.80691480636597,-6.133834354201348'),
+            {
+                'SW_lng': 106.78674459457397,
+                'SW_lat': -6.141301491467023,
+                'NE_lng': 106.80691480636597,
+                'NE_lat': -6.133834354201348
+            },
+            myMessage
+        )
+
+    def test_split_bad_bbox(self):
+        with self.assertRaises(ValueError):
+            split_bbox('invalid bbox string')
 
     def test_osm_building_contributions(self):
         """Test that we can obtain correct contribution counts for a file."""
@@ -49,4 +74,12 @@ class UtilitiesTestCase(LoggedTestCase):
                             '["2012-12-10",1]]')
         myResult = interpolated_timeline(myTimeline)
         self.maxDiff = None
+        self.assertEqual(myExpectedResult, myResult)
+
+    def test_average_for_active_days(self):
+        """Check that we can determine the average per day."""
+        myTimeline = {u'2012-12-01': 10,
+                      u'2012-12-10': 1}
+        myExpectedResult = 5
+        myResult = average_for_active_days(myTimeline)
         self.assertEqual(myExpectedResult, myResult)

@@ -1,16 +1,16 @@
+# coding=utf-8
+"""Helper utilities module to compute various statistics for the current AOI.
+:copyright: (c) 2013 by Tim Sutton
+:license: GPLv3, see LICENSE for more details.
+"""
 import xml
-import xml.sax
-import logging
 import time
 from datetime import date, timedelta
 
 import config
 from reporter.osm_node_parser import OsmNodeParser
 from reporter.osm_way_parser import OsmParser
-from reporter.logger import setup_logger
-
-setup_logger()
-LOGGER = logging.getLogger('osm-reporter')
+from reporter import LOGGER
 
 
 def get_totals(sorted_user_list):
@@ -160,6 +160,29 @@ def date_range(timeline):
         if myTimelineDate > myEndDate:
             myEndDate = myTimelineDate
     return myStartDate, myEndDate
+
+
+def average_for_active_days(timeline):
+    """Compute the average activity per active day in a sparse timeline.
+
+    Args:
+        timeline: dict - a dictionary of non-sequential dates (in
+            YYYY-MM-DD) as keys and values (representing ways collected on that
+            day).
+
+    Returns:
+        int: number of entities captured per day rounded to the nearest int.
+
+    Raises:
+        None
+    """
+    myCount = 0
+    mySum = 0
+    for myValue in timeline.values():
+        myCount += 1
+        mySum += myValue
+    myAverage = mySum / myCount
+    return myAverage
 
 
 def interpolated_timeline(timeline):
