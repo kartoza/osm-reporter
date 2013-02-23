@@ -4,10 +4,10 @@
 :license: GPLv3, see LICENSE for more details.
 """
 
-import xml
+from xml import sax
 
 
-class OsmNodeParser(xml.sax.ContentHandler):
+class OsmNodeParser(sax.ContentHandler):
     """SAX Parser to retrieve nodes from an OSM XML document."""
 
     def __init__(self, username):
