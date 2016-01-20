@@ -7,6 +7,7 @@ import os
 import sys
 import getpass
 from tempfile import mkstemp
+from os.path import isfile
 import xml
 import time
 from datetime import date, timedelta
@@ -17,6 +18,59 @@ from .osm_node_parser import OsmNodeParser
 from .osm_way_parser import OsmParser
 from queries import RESOURCES_MAP
 from . import LOGGER
+
+
+def log_request(ip, feature, extent, qgis_version, inasafe_version, lang):
+    """Write the download to the log file.
+
+    :param ip: The IP address.
+    :type ip: str
+
+    :param feature: The feature to save.
+    :type feature: str
+
+    :param extent: The extent as a dictionary.
+    :type extent: str
+
+    :param qgis_version: The QGIS version.
+    :type qgis_version: str
+
+    :param inasafe_version: The InaSAFE version.
+    :type inasafe_version: str
+
+    :param lang: The language.
+    :type lang: str
+    """
+
+    if not isfile(config.DOWNLOAD_LOG_FILE):
+        # If the file doesn't exist, we add the header.
+        with open(config.DOWNLOAD_LOG_FILE, 'w') as log_file:
+            log_file.write('date;ip;feature;wkt;qgis;inasafe;lang\n')
+        log_file.close()
+
+    time_stamp = time.strftime('%d-%m-%Y %H:%M')
+
+    inasafe_version = short_version(inasafe_version)
+
+    coordinates = extent.split(',')
+    wkt = 'POLYGON((%s %s,%s %s,%s %s,%s %s,%s %s))' % (
+        coordinates[0],
+        coordinates[1],
+        coordinates[0],
+        coordinates[3],
+        coordinates[2],
+        coordinates[3],
+        coordinates[2],
+        coordinates[1],
+        coordinates[0],
+        coordinates[1])
+    csv_items = [
+        time_stamp, ip, feature, wkt, qgis_version, inasafe_version, lang]
+    csv = ';'.join([str(item) for item in csv_items])
+
+    with open(config.DOWNLOAD_LOG_FILE, 'a') as log_file:
+        log_file.write('%s\n' % csv)
+    log_file.close()
 
 
 def overpass_resource_base_path(feature_type):

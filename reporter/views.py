@@ -15,6 +15,7 @@ from . import app
 from . import config
 from .utilities import (
     split_bbox,
+    log_request,
     osm_object_contributions,
     get_totals, osm_nodes_by_user)
 from .osm import (
@@ -120,6 +121,16 @@ def download_feature(feature_type):
     else:
         try:
             file_handle = get_osm_file(coordinates, feature_type, 'body')
+
+            # We log the download.
+            log_request(
+                request.remote_addr,
+                feature_type,
+                bbox,
+                qgis_version,
+                inasafe_version,
+                lang)
+
         except urllib2.URLError:
             # error = "Bad request. Maybe the bbox is too big!"
             abort(500)
