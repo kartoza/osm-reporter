@@ -4,6 +4,7 @@ venv
 .idea
 apache/osm-reporter.apache.conf
 reporter/config/local.py
+osm-reporter-download.csv
 components/
 data
 *~

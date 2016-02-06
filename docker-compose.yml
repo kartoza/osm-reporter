@@ -8,6 +8,8 @@ db:
 
 web:
   image: kartoza/osm-reporter
+  #build: .
+  #dockerfile: Dockerfile
   hostname: web
   container_name: osmreporter_web
   environment:
@@ -20,6 +22,7 @@ web:
     - db:db
   volumes:
     - ./reporter:/reporter
+    - ./log:/log
 
 dev:
   build: .
