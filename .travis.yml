@@ -48,10 +48,10 @@ git:
   depth: 30
 
 
-addons:
-  sauce_connect:
-    username: "timlinux"
-    access_key: "Your Sauce Labs access key"
+#addons:
+  #sauce_connect:
+  #  username: "timlinux"
+  #  access_key: "Your Sauce Labs access key"
 
 notifications:
   irc:
