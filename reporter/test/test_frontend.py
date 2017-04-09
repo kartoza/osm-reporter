@@ -59,7 +59,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         select_feature_type = Select(
             self.driver.find_element_by_id('feature_select'))
         select_feature_type.select_by_visible_text('highway')
-        time.sleep(5)
+        time.sleep(1)
 
         text = self.driver.find_element_by_id('report-heading').text
         self.assertEqual('Highway Contributors', text)
@@ -72,7 +72,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         select_feature_type.select_by_visible_text('building')
 
         self.driver.find_element_by_id('refresh-with-date').click()
-        time.sleep(5)
+        time.sleep(1)
 
         text = self.driver.find_element_by_id('report-heading').text
         self.assertEqual('Building Contributors', text)
@@ -85,7 +85,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         select_feature_type.select_by_visible_text('evacuation_center')
 
         self.driver.find_element_by_id('refresh-with-date').click()
-        time.sleep(5)
+        time.sleep(1)
 
         text = self.driver.find_element_by_id('report-heading').text
         self.assertEqual('Evacuation center Contributors', text)
@@ -98,7 +98,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         select_feature_type.select_by_visible_text('flood_prone')
 
         self.driver.find_element_by_id('refresh-with-date').click()
-        time.sleep(5)
+        time.sleep(1)
 
         text = self.driver.find_element_by_id('report-heading').text
         self.assertEqual('Flood prone Contributors', text)
