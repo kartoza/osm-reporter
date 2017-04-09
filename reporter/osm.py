@@ -49,8 +49,7 @@ def get_osm_file(
         feature='all',
         overpass_verbosity='body',
         date_from=None,
-        date_to=None
-    ):
+        date_to=None):
     """Fetch an osm file given a bounding box using the overpass API.
 
     :param coordinates: Coordinates as a list in the form:
@@ -106,8 +105,10 @@ def get_osm_file(
 
     if date_from and date_to:
         try:
-            datetime_from = datetime.datetime.utcfromtimestamp(float(date_from)/1000.)
-            datetime_to = datetime.datetime.utcfromtimestamp(float(date_to)/1000.)
+            datetime_from = datetime.datetime.utcfromtimestamp(
+                float(date_from) / 1000.)
+            datetime_to = datetime.datetime.utcfromtimestamp(
+                float(date_to) / 1000.)
             date_format = "%Y-%m-%dT%H:%M:%S.%fZ"
             diff_query = '[diff:"{date_from}", "{date_to}"];'.format(
                 date_from=datetime_from.strftime(date_format),

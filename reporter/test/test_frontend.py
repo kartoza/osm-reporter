@@ -57,7 +57,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
     # I am awaiting saucelabs problem resolution with my account before
     # we can set up travis + selenium builds
     @unittest.skipIf(
-        os.environ.get('ON_TRAVIS', True),
+        os.environ.get('ON_TRAVIS', False),
         'This test is not set up for travis yet.')
     def test_roads(self):
         """Check that when we switch to roads the report updates."""
@@ -73,7 +73,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
     # I am awaiting saucelabs problem resolution with my account before
     # we can set up travis + selenium builds
     @unittest.skipIf(
-        os.environ.get('ON_TRAVIS', True),
+        os.environ.get('ON_TRAVIS', False),
         'This test is not set up for travis yet.')
     def test_buildings(self):
         """Check that when we switch to buildings the report updates."""
@@ -91,7 +91,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
     # I am awaiting saucelabs problem resolution with my account before
     # we can set up travis + selenium builds
     @unittest.skipIf(
-        os.environ.get('ON_TRAVIS', True),
+        os.environ.get('ON_TRAVIS', False),
         'This test is not set up for travis yet.')
     def test_evacuation_centers(self):
         """Check that when switch to evacuation centers the report updates."""
@@ -109,7 +109,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
     # I am awaiting saucelabs problem resolution with my account before
     # we can set up travis + selenium builds
     @unittest.skipIf(
-        os.environ.get('ON_TRAVIS', True),
+        os.environ.get('ON_TRAVIS', False),
         'This test is not set up for travis yet.')
     def test_flood_prone(self):
         """Check that when switch to flood_prone the report updates."""
