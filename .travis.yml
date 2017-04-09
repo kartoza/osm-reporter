@@ -15,13 +15,11 @@ addons:
   apt:
     sources:
       - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'  # postgis
-      - google-chrome
     packages:
       # Check that legacy scripts are available before upgrading postgis - they are required!
       - postgresql-9.4-postgis-2.1
       - osm2pgsql
       - postgis
-      - google-chrome-stable
 # python defs need to be here as well as in include for test matrix
 # see https://docs.travis-ci.com/user/customizing-the-build#Explicitly-Included-Jobs-need-complete-definitions
 python:
@@ -29,6 +27,9 @@ python:
   - '3.5'
   - '3.4'
   - '2.7'
+env:
+  global:
+    - ON_TRAVIS=true
 
 # Build environment specific options - one build per top level item in include list
 matrix:
@@ -70,7 +71,6 @@ notifications:
 
 before_install:
   #- ./ci/travis/${TRAVIS_CONFIG}/before_install.sh
-  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x16"
 
 install:
   #- ./ci/travis/${TRAVIS_CONFIG}/install.sh
@@ -92,11 +92,6 @@ before_script:
   - psql -l
   - which pgsql2shp
   - pip install -r requirements-dev.txt
-  # google chrome standalone driver
-  - wget http://chromedriver.storage.googleapis.com/2.10/chromedriver_linux64.zip
-  - unzip chromedriver_linux64.zip
-  - mv chromedriver /usr/local/bin
-  - chmod a+x /usr/local/bin/chromedriver
 
 script:
   - PYTHONPATH=`pwd`/reporter:`pwd`:$(PYTHONPATH) nosetests -v --with-id --with-xcoverage --with-xunit --verbose --cover-package=reporter reporter
