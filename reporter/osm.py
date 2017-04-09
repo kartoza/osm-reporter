@@ -28,20 +28,12 @@ from reporter.exceptions import (
     OverpassBadRequestException,
     OverpassConcurrentRequestException)
 from reporter.metadata import metadata_files
-if sys.version_info > (3, 0):
-    from urllib.request import urlopen as urlopen
-    # noinspection PyPep8Naming
-    from urllib.request import Request as request
-    from urllib.parse import quote
-    # noinspection PyPep8Naming
-    from urllib.error import HTTPError as url_error
-else:
-    # noinspection PyUnresolvedReferences,PyPep8Naming
-    from urllib2 import Request as request
-    # noinspection PyUnresolvedReferences
-    from urllib2 import urlopen
-    # noinspection PyPep8Naming,PyUnresolvedReferences
-    from urllib2 import URLError as url_error
+from urllib.request import urlopen
+# noinspection PyPep8Naming
+from urllib.request import Request
+from urllib.parse import quote
+# noinspection PyPep8Naming
+from urllib.error import HTTPError
 
 
 def get_osm_file(
@@ -176,7 +168,7 @@ def fetch_osm(file_path, url_path):
     """
     LOGGER.debug('Getting URL: %s', url_path)
     headers = {'User-Agent': 'InaSAFE'}
-    web_request = request(url_path, None, headers)
+    web_request = Request(url_path, None, headers)
     try:
         url_handle = urlopen(web_request, timeout=60)
         data = url_handle.read().decode('utf-8')
@@ -187,7 +179,7 @@ def fetch_osm(file_path, url_path):
         file_handle = open(file_path, 'wb')
         file_handle.write(data.encode('utf-8'))
         file_handle.close()
-    except url_error as e:
+    except HTTPError as e:
         if e.code == 400:
             LOGGER.exception('Bad request to Overpass')
             raise OverpassBadRequestException

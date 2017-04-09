@@ -26,7 +26,6 @@ python:
   - '3.6'
   - '3.5'
   - '3.4'
-  - '2.7'
 env:
   global:
     - ON_TRAVIS=true
@@ -41,8 +40,6 @@ matrix:
       env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
     - python: '3.4'
       env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
-    - python: '2.7'
-      env: TRAVIS_CONFIG=PYTHON2 # used if you want to run environment specific stuff in before_script
   exclude:
     # This is a daft hack to solve a problem where travis creates a
     # default build for every python variation we try to build with
@@ -52,7 +49,6 @@ matrix:
     - python: '3.6'
     - python: '3.5'
     - python: '3.4'
-    - python: '2.7'
 
 git:
   depth: 30
