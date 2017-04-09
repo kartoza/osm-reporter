@@ -64,6 +64,16 @@
                 <h2>Filters</h2>
                 <hr/>
             </div>
+            <div class="span8">
+                <h4>Area of Interest: </h4>
+                <select name='aoi_select' id='aoi_select'>
+                    {% for tag_name in available_aois%}
+                        <option {% if aoi_name == current_aoi_name %} selected {% endif %}>
+                            {{ aoi_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="span4">
                 <h4>Feature Type : </h4>
                 <select name='feature_select' id='feature_select'>
@@ -74,17 +84,17 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="span3">
+            <div class="span4">
                 <div class="date-box">
                     <h4>Date From : </h4><input type='text' data-language='en' id='date-from'/>
                 </div>
             </div>
-            <div class="span3">
+            <div class="span4">
                 <div class="date-box">
                     <h4>Date To : </h4><input type='text' class='datepicker-here' data-language='en' id='date-to'/>
                 </div>
             </div>
-            <div class="span2">
+            <div class="span4">
                 <button type="button" class="btn btn-default" id="refresh-with-date" style="margin-top:17px; width: 100%">Refresh</button>
             </div>
         </div>
@@ -212,7 +222,26 @@
                 clickable: false
             }).addTo(map);
             window.bbox = map.getBounds().toBBoxString();
+
+            // Add AOI's to the map
+            polyLayer = L.geoJson(null, {filter: layerFilter, onEachFeature: addProjectToList}).addTo(map);
+            $.getJSON("https://s3.amazonaws.com/tm-projects-vt/hotprojects.geojson", function(data) {
+                polyLayer.addData(data);
+            });
+
         });
+
+        //polyLayer will only include feature
+        function layerFilter(feature) {
+            if (feature.properties.name != "") return true
+        }
+        //for every HOT project area, add an entry to the select widget
+        function addProjectToList(feature, layer) {
+            projectName = feature.properties.name;
+            var projectsWidget = $("#aoi_select");
+            projectsWidget.append("<option value='" + feature.id + "'>" + projectName + "</option>");
+        }
+
         $(function () {
             {# Pie chart for all users #}
             var myData = [
