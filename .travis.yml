@@ -47,7 +47,10 @@ matrix:
     # This is a daft hack to solve a problem where travis creates a
     # default build for every python variation we try to build with
     # see https://github.com/travis-ci/travis-ci/issues/4681#issuecomment-277513723
-    - language: python
+    - python: '3.6'
+    - python: '3.5'
+    - python: '3.4'
+    - python: '2.7'
 
 git:
   depth: 30
