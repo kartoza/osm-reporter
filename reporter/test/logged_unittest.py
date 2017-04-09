@@ -39,14 +39,17 @@ class LoggedLiveServerTestCase(LiveServerTestCase):
         app.config['TESTING'] = True
         return app
 
+    # noinspection PyPep8Naming
     def setUp(self):
         """Set test preliminary state."""
         pass
 
+    # noinspection PyPep8Naming
     def tearDown(self):
         """Clean state after test."""
         pass
 
+    # noinspection PyPep8Naming
     def failureException(self, msg):
         """Overloaded failure exception that will log to sentry.
 

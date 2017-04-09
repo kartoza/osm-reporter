@@ -21,8 +21,27 @@ class TestFrontEnd(LoggedLiveServerTestCase):
 
     def setUp(self):
         """Setup the selenium driver."""
-        self.driver = webdriver.Chrome()
-        self.driver.get(self.get_server_url())
+        self.app = self.create_app()
+        # First just do a basic test to see that the test server works
+        # independently of selenium tests.
+        #result = self.app.get(
+        #    '/', data=dict(), follow_redirects=True)
+        #code = result.status_code
+        #self.assertEquals(code, 200)
+
+        # now setup selenium driver
+        # TODO add platform check and look for common browsers
+        # We can check firefox and chrome on all platforms...
+        try:
+            self.driver = webdriver.Chrome()
+        except Exception as e:
+            self.fail(
+                'Error setting up selenium driver for Chrome\n%s' % e.message)
+        try:
+            self.driver.get(self.get_server_url())
+        except Exception as e:
+            self.fail(
+                'Error getting server url for selenium tests\n%s' % e.message)
         LOGGER.info('Preparing to run front end tests')
 
     def tearDown(self):
@@ -50,7 +69,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
 
         select_feature_type = Select(
             self.driver.find_element_by_id('feature_select'))
-        select_feature_type.select_by_visible_text('buildings')
+        select_feature_type.select_by_visible_text('building')
 
         self.driver.find_element_by_id('refresh-with-date').click()
         time.sleep(5)
@@ -69,7 +88,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         time.sleep(5)
 
         text = self.driver.find_element_by_id('report-heading').text
-        self.assertEqual('Evacuation Center Contributors', text)
+        self.assertEqual('Evacuation center Contributors', text)
 
     def test_flood_prone(self):
         """Check that when switch to flood_prone the report updates."""
@@ -82,7 +101,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         time.sleep(5)
 
         text = self.driver.find_element_by_id('report-heading').text
-        self.assertEqual('Flood Prone Contributors', text)
+        self.assertEqual('Flood prone Contributors', text)
 
 if __name__ == '__main__':
     unittest.main()
