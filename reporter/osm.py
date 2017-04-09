@@ -62,10 +62,10 @@ def get_osm_file(
     :param overpass_verbosity: Output verbosity in Overpass.
         It can be body, skeleton, ids_only or meta.
     :type overpass_verbosity: str
-    
+
     :param date_from: First date for date range.
     :type date_from: str
-    
+
     :param date_to: Second date for date range.
     :type date_to: str
 
