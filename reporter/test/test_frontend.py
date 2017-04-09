@@ -49,6 +49,11 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         """Clean up the selenium driver."""
         self.driver.quit()
 
+    # I am awaiting saucelabs problem resolution with my account before
+    # we can set up travis + selenium builds
+    @unittest.skipIf(
+        os.environ.get('ON_TRAVIS', False),
+        'This test is not set up for travis yet.')
     def test_server_is_up_and_running(self):
         """Check that the home page loads ok."""
         response = request.urlopen(self.get_server_url())
