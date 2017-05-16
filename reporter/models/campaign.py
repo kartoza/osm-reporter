@@ -48,7 +48,8 @@ class Campaign(JsonModel):
     def parse_json_file(self):
         """ Parse json file for this campaign.
 
-        If file is corrupted, it will raise Campaign.CorruptedFile exception.
+        If file is corrupted,
+        it will raise Campaign.CorruptedFile exception.
         """
         if self.json_path:
             try:
@@ -136,7 +137,8 @@ class Campaign(JsonModel):
         """Validate found dict based on campaign class.
         uuid should be same as uuid file.
         """
-        required_attributes = ['uuid', 'version', 'campaign_creator', 'edited_by', 'name']
+        required_attributes = [
+            'uuid', 'version', 'campaign_creator', 'edited_by', 'name']
         for required_attribute in required_attributes:
             if required_attribute not in dict:
                 raise JsonModel.RequiredAttributeMissed(required_attribute)

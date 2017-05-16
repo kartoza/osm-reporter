@@ -266,9 +266,11 @@ def edit_campaign(uuid):
             form.coverage.data = campaign.coverage
             form.campaign_managers.data = campaign.campaign_managers
             form.selected_functions.data = campaign.selected_functions
-            form.start_date.data = datetime.datetime.strptime(campaign.start_date, '%Y-%m-%d')
+            form.start_date.data = datetime.datetime.strptime(
+                campaign.start_date, '%Y-%m-%d')
             if campaign.end_date:
-                form.end_date.data = datetime.datetime.strptime(campaign.end_date, '%Y-%m-%d')
+                form.end_date.data = datetime.datetime.strptime(
+                    campaign.end_date, '%Y-%m-%d')
         else:
             form = CampaignForm(request.form)
             if form.validate_on_submit():
@@ -291,7 +293,10 @@ def get_insights_function(uuid):
     """
     try:
         insights_function = InsightsFunction.get(uuid)
-        return Response(json.dumps(insights_function.to_dict(), sort_keys=True))
+        return Response(
+            json.dumps(
+                insights_function.to_dict(),
+                sort_keys=True))
     except InsightsFunction.DoesNotExist:
         return Response('Campaign not found')
 

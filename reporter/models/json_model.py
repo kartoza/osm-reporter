@@ -19,7 +19,10 @@ class JsonModel(Version):
         :return: attributes
         :rtype: list
         """
-        return [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
+        return [
+            attr for attr in dir(self)
+            if not callable(getattr(self, attr)) and not attr.startswith("__")
+            ]
 
     def to_dict(self):
         """ Return json model as dictionary.
@@ -41,4 +44,5 @@ class JsonModel(Version):
     class RequiredAttributeMissed(Exception):
         def __init__(self, attribute):
             self.message = "%s is missed" % attribute
-            super(JsonModel.RequiredAttributeMissed, self).__init__(self.message)
+            super(JsonModel.RequiredAttributeMissed,
+                  self).__init__(self.message)

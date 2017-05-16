@@ -125,7 +125,8 @@ class InsightsFunction(JsonModel):
         """Validate found dict based on insights function class.
         uuid should be same as uuid file.
         """
-        required_attributes = ['uuid', 'version', 'edited_by', 'insight_function']
+        required_attributes = [
+            'uuid', 'version', 'edited_by', 'insight_function']
         for required_attribute in required_attributes:
             if required_attribute not in dict:
                 raise JsonModel.RequiredAttributeMissed(required_attribute)
