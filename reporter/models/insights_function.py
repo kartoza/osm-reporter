@@ -6,44 +6,20 @@ import os
 from reporter.models.json_model import JsonModel
 
 
-class Campaign(JsonModel):
+class InsightsFunction(JsonModel):
     """
-    Class campaign model that hold campaign information and functions.
+    Class insights funtion model that hold campaign information and functions.
     """
     uuid = ''
-    name = ''
-    campaign_creator = ''
-    campaign_status = ''
-    coverage = ''
-    geometry = None
-    start_date = None
-    end_date = None
-    campaign_managers = []
-    selected_functions = []
+    insight_function = ''
+    parameters = []
+    category = []
+    output = ''
 
     def __init__(self, uuid):
         self.uuid = uuid
-        self.json_path = Campaign.get_json_file(uuid)
+        self.json_path = InsightsFunction.get_json_file(uuid)
         self.parse_json_file()
-
-    def update_data(self, dict, uploader):
-        """ Update data with new dict.
-        """
-        for key, value in dict.items():
-            setattr(self, key, value)
-        self.version += 1
-        self.edited_by = uploader
-
-        # save updated campaign to json
-        dict = self.to_dict()
-        Campaign.validate(dict, self.uuid)
-        json_str = Campaign.serialize(dict)
-        json_path = os.path.join(
-            Campaign.get_json_folder(), '%s.json' % self.uuid
-        )
-        _file = open(json_path, 'w+')
-        _file.write(json_str)
-        _file.close()
 
     def parse_json_file(self):
         """ Parse json file for this campaign.
@@ -55,7 +31,7 @@ class Campaign(JsonModel):
                 _file = open(self.json_path, 'r')
                 content = _file.read()
                 content_json = json.loads(content)
-                Campaign.validate(content_json, self.uuid)
+                InsightsFunction.validate(content_json, self.uuid)
                 attributes = self.get_attributes()
                 for key, value in content_json.items():
                     if key in attributes:
@@ -67,7 +43,7 @@ class Campaign(JsonModel):
     def get_json_folder():
         file_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(
-            file_path, os.pardir, 'campaigns_data', 'campaign')
+            file_path, os.pardir, 'campaigns_data', 'selected_functions')
 
     @staticmethod
     def serialize(dict):
@@ -76,9 +52,6 @@ class Campaign(JsonModel):
         :key dict: dictionary
         :type dict: dict
         """
-        dict['start_date'] = dict['start_date'].strftime('%Y-%m-%d')
-        if dict['end_date']:
-            dict['end_date'] = dict['end_date'].strftime('%Y-%m-%d')
         json_str = json.dumps(dict)
         return json_str
 
@@ -89,14 +62,13 @@ class Campaign(JsonModel):
         """
         dict['version'] = 1
         dict['edited_by'] = uploader
-        dict['campaign_creator'] = uploader
 
         uuid = dict['uuid']
-        Campaign.validate(dict, uuid)
+        InsightsFunction.validate(dict, uuid)
 
-        json_str = Campaign.serialize(dict)
+        json_str = InsightsFunction.serialize(dict)
         json_path = os.path.join(
-            Campaign.get_json_folder(), '%s.json' % uuid
+            InsightsFunction.get_json_folder(), '%s.json' % uuid
         )
         _file = open(json_path, 'w+')
         _file.write(json_str)
@@ -104,15 +76,32 @@ class Campaign(JsonModel):
 
     @staticmethod
     def get(uuid):
-        """Get campaign from uuid
+        """Get insights function from uuid
 
-        :param uuid: UUID of campaign that to be returned
+        :param uuid: UUID of insights function that to be returned
         :type uuid: str
 
-        :return: Campaign that found or none
-        :rtype: Campaign
+        :return: insights function that found or none
+        :rtype: insights function
         """
-        return Campaign(uuid)
+        return InsightsFunction(uuid)
+
+    @staticmethod
+    def all():
+        """Get all insights function
+
+        :return: insights function that found or none
+        :rtype: [insights function]
+        """
+        insight_functions = []
+        for root, dirs, files in os.walk(InsightsFunction.get_json_folder()):
+            for file in files:
+                filename = os.path.splitext(file)[0]
+                try:
+                    insight_functions.append(InsightsFunction(filename))
+                except InsightsFunction.DoesNotExist:
+                    pass
+        return insight_functions
 
     @staticmethod
     def get_json_file(uuid):
@@ -124,19 +113,19 @@ class Campaign(JsonModel):
         :rtype: str
         """
         json_path = os.path.join(
-            Campaign.get_json_folder(), '%s.json' % uuid
+            InsightsFunction.get_json_folder(), '%s.json' % uuid
         )
         if os.path.isfile(json_path):
             return json_path
         else:
-            raise Campaign.DoesNotExist()
+            raise InsightsFunction.DoesNotExist()
 
     @staticmethod
     def validate(dict, uuid):
-        """Validate found dict based on campaign class.
+        """Validate found dict based on insights function class.
         uuid should be same as uuid file.
         """
-        required_attributes = ['uuid', 'version', 'campaign_creator', 'edited_by', 'name']
+        required_attributes = ['uuid', 'version', 'edited_by', 'insight_function']
         for required_attribute in required_attributes:
             if required_attribute not in dict:
                 raise JsonModel.RequiredAttributeMissed(required_attribute)
@@ -147,5 +136,5 @@ class Campaign(JsonModel):
     @staticmethod
     class DoesNotExist(Exception):
         def __init__(self):
-            self.message = "Campaign doesn't exist"
-            super(Campaign.DoesNotExist, self).__init__(self.message)
+            self.message = "insights function doesn't exist"
+            super(InsightsFunction.DoesNotExist, self).__init__(self.message)

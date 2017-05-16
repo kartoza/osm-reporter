@@ -207,6 +207,13 @@ def user_status():
             return jsonify(d=node_data)
 
 
+# -----------------------------------------------------------------
+# Campaigner
+# -----------------------------------------------------------------
+
+app.config['SECRET_KEY'] = 'please, tell nobody'
+
+
 @app.route('/campaign/<uuid>')
 def get_campaign(uuid):
     import json
@@ -218,42 +225,6 @@ def get_campaign(uuid):
         return Response(json.dumps(campaign.to_dict(), sort_keys=True))
     except Campaign.DoesNotExist:
         return Response('Campaign not found')
-
-
-app.config['SECRET_KEY'] = 'please, tell nobody'
-
-
-@app.route('/campaign/edit/<uuid>', methods=['GET', 'POST'])
-def edit_campaign(uuid):
-    import datetime
-    from flask import url_for, redirect
-    from reporter.forms.campaign import CampaignForm
-    from reporter.models.campaign import Campaign
-    """Get campaign details.
-    """
-    try:
-        campaign = Campaign.get(uuid)
-        context = campaign.to_dict()
-        if request.method == 'GET':
-            form = CampaignForm()
-            form.name.data = campaign.name
-            form.campaign_status.data = campaign.campaign_status
-            form.coverage.data = campaign.coverage
-            form.start_date.data = datetime.datetime.strptime(campaign.start_date, '%Y-%m-%d')
-            if campaign.end_date:
-                form.end_date.data = datetime.datetime.strptime(campaign.end_date, '%Y-%m-%d')
-        else:
-            form = CampaignForm(request.form)
-            if form.validate_on_submit():
-                data = form.data
-                data.pop('csrf_token')
-                data.pop('submit')
-                campaign.update_data(data, 'Irwan')
-                return redirect(url_for('get_campaign', uuid=campaign.uuid))
-    except Campaign.DoesNotExist:
-        return Response('Campaign not found')
-
-    return render_template('edit_form.html', form=form, context=context)
 
 
 @app.route('/campaign/create', methods=['GET', 'POST'])
@@ -275,6 +246,54 @@ def create_campaign():
         return redirect(url_for('get_campaign', uuid=data['uuid']))
 
     return render_template('create_form.html', form=form)
+
+
+@app.route('/campaign/edit/<uuid>', methods=['GET', 'POST'])
+def edit_campaign(uuid):
+    import datetime
+    from flask import url_for, redirect
+    from reporter.forms.campaign import CampaignForm
+    from reporter.models.campaign import Campaign
+    """Get campaign details.
+    """
+    try:
+        campaign = Campaign.get(uuid)
+        context = campaign.to_dict()
+        if request.method == 'GET':
+            form = CampaignForm()
+            form.name.data = campaign.name
+            form.campaign_status.data = campaign.campaign_status
+            form.coverage.data = campaign.coverage
+            form.campaign_managers.data = campaign.campaign_managers
+            form.selected_functions.data = campaign.selected_functions
+            form.start_date.data = datetime.datetime.strptime(campaign.start_date, '%Y-%m-%d')
+            if campaign.end_date:
+                form.end_date.data = datetime.datetime.strptime(campaign.end_date, '%Y-%m-%d')
+        else:
+            form = CampaignForm(request.form)
+            if form.validate_on_submit():
+                data = form.data
+                data.pop('csrf_token')
+                data.pop('submit')
+                campaign.update_data(data, 'Irwan')
+                return redirect(url_for('get_campaign', uuid=campaign.uuid))
+    except Campaign.DoesNotExist:
+        return Response('Campaign not found')
+
+    return render_template('edit_form.html', form=form, context=context)
+
+
+@app.route('/insights_function/<uuid>')
+def get_insights_function(uuid):
+    import json
+    from reporter.models.insights_function import InsightsFunction
+    """Insights function details.
+    """
+    try:
+        insights_function = InsightsFunction.get(uuid)
+        return Response(json.dumps(insights_function.to_dict(), sort_keys=True))
+    except InsightsFunction.DoesNotExist:
+        return Response('Campaign not found')
 
 
 if __name__ == '__main__':
