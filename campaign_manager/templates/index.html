@@ -1,10 +1,229 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Campaign Home</title>
+    <link rel="shortcut icon" href="/static/img/favicon.ico"/>
+    <link rel="stylesheet" href="/static/css/bootstrap.3.3.7.min.css"
+          type="text/css" static="screen, projection"/>
+    <link rel="stylesheet" href="/static/css/leaflet.css" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <!--[if lte IE 8]>
+         <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" />
+    <![endif]-->
+    <link rel="stylesheet" href="/static/css/reporter.css"
+          type="text/css" static="screen, projection"/>
+    <script language="javascript"
+            type="text/javascript" src="/static/js/jquery-3.2.0.min.js"></script>
+
+    <script type="text/javascript" src="/static/js/datepicker.min.js"></script>
+    <script type="text/javascript" src="/static/js/datepicker.en.js"></script>
+    <script language="javascript"
+            type="text/javascript" src="/static/js/leaflet.js"></script>
+    <script language="javascript"
+            type="text/javascript" src="/static/js/reporter.js"></script>
+    <script language="javascript"
+            type="text/javascript" src="/static/js/osmauth.js"></script>
+    <script language="javascript"
+            type="text/javascript" src="/static/js/bootstrap.3.3.7.min.js"></script>
+
+    <style type="text/css">
+
+        #profile {
+            display: none;
+        }
+
+        .jumbotron {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        #profile-pic img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: -12px;
+            margin-top: -12px;
+        }
+
+        #profile-name {
+            margin-left: 10px;
+        }
+
+        .navbar-default {
+            background-color: #1496c8;
+            border-color: #337ab7;
+        }
+
+        .navbar-default .navbar-brand {
+            color: white;
+        }
+
+        .navbar-default .navbar-brand:hover {
+            color: white;
+        }
+
+        .navbar-default .navbar-nav>.active>a,
+        .navbar-default .navbar-nav>.active>a:focus,
+        .navbar-default .navbar-nav>.active>a:hover {
+            color: white;
+            background-color: #1386B3;
+        }
+
+        .navbar-default .navbar-nav>.open>a,
+        .navbar-default .navbar-nav>.open>a:focus,
+        .navbar-default .navbar-nav>.open>a:hover {
+            color: white;
+            background-color: #1386B3;
+        }
+
+        .navbar-default .navbar-nav>li>a {
+            color: white;
+        }
+
+        .navbar-default .navbar-nav>li>a:hover{
+            color: white;
+            background-color: #169ED2;
+        }
+
+        body {
+            padding-top: 70px;
+            font-family: 'Lato', sans-serif;
+        }
+    </style>
+
 </head>
 <body>
 
+
+<!-- Fixed navbar -->
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand">Campaign Manager</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Action</a></li>
+                        <li><a href="#">Another action</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li class="dropdown-header">Nav header</li>
+                        <li><a href="#">Separated link</a></li>
+                        <li><a href="#">One more separated link</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a id='login' href="#">Login</a></li>
+                <li id="profile">
+                    <a id="profile-pic" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" id="logout">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div>
+</nav>
+
+<div class="container">
+    <div class="jumbotron">
+        <h2 id="welcome">Welcome!</h2>
+        <p id="info">Please login first.</p>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var auth = osmAuth({
+        oauth_secret: '9f95RUKTXS5n9tDRjmrY8rzCYAztVd6yGjQRnX7S',
+        oauth_consumer_key: '8rxeThT7aWhL7bCUH8k33M51V2u9Pwsm8hAXxOVa',
+        auto: true
+    });
+
+    $('#login').click(function () {
+        login();
+    });
+
+    $('#logout').click(function () {
+        logout();
+    });
+
+    function done(err, res) {
+        if(err) {
+            $('#info').html('error! try clearing your browser cache');
+            return;
+        }
+        var u = res.getElementsByTagName('user')[0];
+        var changesets = res.getElementsByTagName('changesets')[0];
+
+        console.log(u);
+
+        var o = {
+            display_name: u.getAttribute('display_name'),
+            id: u.getAttribute('id'),
+            count: changesets.getAttribute('count')
+        };
+
+        var image = (res.getElementsByTagName('img')[0]).getAttribute('href');
+
+        $('#profile-pic').append('<img src=' + image + '/>');
+        $('#profile-pic').append('<span id="profile-name"></span>'+ o.display_name + ' <span class="caret"></span>');
+
+        $('#welcome').html('Welcome ' + o.display_name + '!');
+        $('#info').html('Your ID : ' + o.id);
+    }
+
+    function login() {
+        auth.authenticate(function () {
+            update();
+        })
+    }
+
+    function logout() {
+        auth.logout();
+        update();
+    }
+    
+    function update() {
+        if(auth.authenticated()) {
+            showDetails();
+        } else {
+            hideDetails();
+        }
+    }
+
+    function showDetails() {
+        $('#login').hide();
+        $('#profile').show();
+
+        auth.xhr({
+            method: 'GET',
+            path: '/api/0.6/user/details'
+        }, done);
+    }
+
+    function hideDetails() {
+        $('#login').show();
+        $('#profile').hide();
+        $('#profile-pic').html('');
+
+        $('#welcome').html('Welcome!');
+        $('#info').html('Please login first.');
+    }
+
+    update();
+
+</script>
+
 </body>
-</html>

@@ -16,9 +16,6 @@ def home():
     return render_template('index.html', **context)
 
 
-# -----------------------------------------------------------------
-# Campaigner
-# -----------------------------------------------------------------
 @campaign_manager.route('/campaign/<uuid>/sidebar')
 def get_campaign_sidebar(uuid):
     from campaign_manager.models.campaign import Campaign
@@ -108,3 +105,10 @@ def edit_campaign(uuid):
 
     return render_template(
         'edit_campaign_form.html', form=form, context=context)
+
+
+@campaign_manager.route('/land.html')
+def landing_auth():
+    """OSM auth landing page.
+    """
+    return render_template('land.html')
