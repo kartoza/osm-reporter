@@ -8,10 +8,16 @@
           type="text/css" static="screen, projection"/>
     <link rel="stylesheet" href="/static/css/leaflet.css" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/leaflet.css" type="text/css">
     <!--[if lte IE 8]>
          <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" />
     <![endif]-->
-    <link rel="stylesheet" href="/static/css/reporter.css"
+
+
+    <link rel="stylesheet" href="/static/css/custom-button.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/font-awesome.css" type="text/css">
+
+    <link rel="stylesheet" href="/static/css/campaign-manager-base.css"
           type="text/css" static="screen, projection"/>
     <script language="javascript"
             type="text/javascript" src="/static/js/jquery-3.2.0.min.js"></script>
@@ -26,71 +32,6 @@
             type="text/javascript" src="/static/js/osmauth.js"></script>
     <script language="javascript"
             type="text/javascript" src="/static/js/bootstrap.3.3.7.min.js"></script>
-
-    <style type="text/css">
-
-        #profile {
-            display: none;
-        }
-
-        .jumbotron {
-            padding-top: 20px;
-            padding-bottom: 20px;
-        }
-
-        #profile-pic img {
-            width: 40px;
-            height: 40px;
-            margin-bottom: -12px;
-            margin-top: -12px;
-        }
-
-        #profile-name {
-            margin-left: 10px;
-        }
-
-        .navbar-default {
-            background-color: #1496c8;
-            border-color: #337ab7;
-        }
-
-        .navbar-default .navbar-brand {
-            color: white;
-        }
-
-        .navbar-default .navbar-brand:hover {
-            color: white;
-        }
-
-        .navbar-default .navbar-nav>.active>a,
-        .navbar-default .navbar-nav>.active>a:focus,
-        .navbar-default .navbar-nav>.active>a:hover {
-            color: white;
-            background-color: #1386B3;
-        }
-
-        .navbar-default .navbar-nav>.open>a,
-        .navbar-default .navbar-nav>.open>a:focus,
-        .navbar-default .navbar-nav>.open>a:hover {
-            color: white;
-            background-color: #1386B3;
-        }
-
-        .navbar-default .navbar-nav>li>a {
-            color: white;
-        }
-
-        .navbar-default .navbar-nav>li>a:hover{
-            color: white;
-            background-color: #169ED2;
-        }
-
-        body {
-            padding-top: 70px;
-            font-family: 'Lato', sans-serif;
-        }
-    </style>
-
 </head>
 <body>
 
@@ -137,17 +78,31 @@
 </nav>
 
 <div class="container">
-    <div class="jumbotron">
-        <h2 id="welcome">Welcome!</h2>
-        <p id="info">Please login first.</p>
+
+    <div id="add-campaign">
+        <a href="#" class="custom-button" id="add-campaign-button">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            <span style="margin-left: 5px;">Create New Campaign</span> </a>
     </div>
+
+    <div id="map">
+    </div>
+
 </div>
 
 <script type="text/javascript">
 
+    $(document).ready(function(){
+        var map = L.map('map').setView([0, 0], 1);
+        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="http://www.openstreetmap.org" target="_parent">OpenStreetMap</a> and contributors, under an <a href="http://www.openstreetmap.org/copyright" target="_parent">open license</a>',
+            maxZoom: 1
+        }).addTo(map);
+    });
+
     var auth = osmAuth({
-        oauth_secret: '9f95RUKTXS5n9tDRjmrY8rzCYAztVd6yGjQRnX7S',
-        oauth_consumer_key: '8rxeThT7aWhL7bCUH8k33M51V2u9Pwsm8hAXxOVa',
+        oauth_secret: '{{ oauth_secret }}',
+        oauth_consumer_key: '{{ oauth_consumer_key }}',
         auto: true
     });
 

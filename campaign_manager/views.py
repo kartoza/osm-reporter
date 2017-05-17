@@ -1,6 +1,7 @@
 from flask import request, render_template, Response
 
 from campaign_manager import campaign_manager
+from secret import OAUTH_CONSUMER_KEY, OAUTH_SECRET
 
 
 @campaign_manager.route('/')
@@ -10,7 +11,8 @@ def home():
     On this page a summary campaign manager view will shown.
     """
     context = dict(
-        testing='hello'
+        oauth_consumer_key=OAUTH_CONSUMER_KEY,
+        oauth_secret=OAUTH_SECRET
     )
     # noinspection PyUnresolvedReferences
     return render_template('index.html', **context)
