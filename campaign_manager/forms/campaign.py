@@ -8,7 +8,8 @@ from wtforms.fields import (
     DateField,
     SelectMultipleField,
     StringField,
-    SubmitField
+    SubmitField,
+    HiddenField
 )
 from wtforms.validators import DataRequired, Optional
 from campaign_manager.settings import users
@@ -38,4 +39,5 @@ class CampaignForm(FlaskForm):
                 ]
             ]
     )
+    geometry = HiddenField(u'Map geometry for this campaign')
     submit = SubmitField(u'Submit')

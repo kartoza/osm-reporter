@@ -65,8 +65,10 @@ def create_campaign():
                 'campaign_manager.get_campaign',
                 uuid=data['uuid'])
         )
-
-    return render_template('create_campaign_form.html', form=form)
+    context = {}
+    context['action'] = '/campaign_manager/campaign/create'
+    return render_template(
+        'create_campaign_form.html', form=form, context=context)
 
 
 @campaign_manager.route('/campaign/edit/<uuid>', methods=['GET', 'POST'])
@@ -87,6 +89,7 @@ def edit_campaign(uuid):
             form.coverage.data = campaign.coverage
             form.campaign_managers.data = campaign.campaign_managers
             form.selected_functions.data = campaign.selected_functions
+            form.geometry.data = campaign.geometry
             form.start_date.data = datetime.datetime.strptime(
                 campaign.start_date, '%Y-%m-%d')
             if campaign.end_date:
@@ -105,6 +108,6 @@ def edit_campaign(uuid):
                 )
     except Campaign.DoesNotExist:
         return Response('Campaign not found')
-
+    context['action'] = '/campaign_manager/campaign/edit/%s' % uuid
     return render_template(
-        'edit_campaign_form.html', form=form, context=context)
+        'create_campaign_form.html', form=form, context=context)
