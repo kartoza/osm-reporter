@@ -1,8 +1,7 @@
 __author__ = 'Irwan Fathurrahman <irwan@kartoza.com>'
 __date__ = '10/05/17'
 
-import os
-from reporter.models.version import Version
+from campaign_manager.models.version import Version
 
 
 class JsonModel(Version):

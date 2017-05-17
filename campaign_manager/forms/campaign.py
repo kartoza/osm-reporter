@@ -1,6 +1,8 @@
 __author__ = 'Irwan Fathurrahman <irwan@kartoza.com>'
 __date__ = '10/05/17'
 
+import inspect
+
 from flask_wtf import FlaskForm
 from wtforms.fields import (
     DateField,
@@ -9,9 +11,8 @@ from wtforms.fields import (
     SubmitField
 )
 from wtforms.validators import DataRequired, Optional
-
-from reporter.settings import users
-from reporter.models.insights_function import InsightsFunction
+from campaign_manager.settings import users
+import campaign_manager.selected_functions as selected_functions
 
 
 class CampaignForm(FlaskForm):
@@ -29,8 +30,12 @@ class CampaignForm(FlaskForm):
     selected_functions = SelectMultipleField(
         u'Functions for this campaign',
         choices=[
-            (insights_function.uuid, insights_function.name())
-            for insights_function in InsightsFunction.all()
+            (insights_function, insights_function)
+            for insights_function in [
+                m[0] for m in inspect.getmembers(
+                    selected_functions, inspect.isclass
+                )
+                ]
             ]
     )
     submit = SubmitField(u'Submit')

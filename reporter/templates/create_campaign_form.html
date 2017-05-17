@@ -39,23 +39,12 @@
             color: red;
             font-style: italic;
         }
-
-        label {
-            font-weight: 600;
-        }
     </style>
 
 </head>
 <body>
 <div class="container">
-    <div>
-        <label>Version : </label>{{ context.version }}
-    </div>
-    <div>
-        <label>Last edited by :</label> {{ context.edited_by }}
-    </div>
-    <hr>
-    <form method="POST" action="/campaign/edit/{{ context.uuid }}">
+    <form method="POST" action="/campaign_manager/campaign/create">
         {{ form.hidden_tag() }}
 
         {% for field in form %}

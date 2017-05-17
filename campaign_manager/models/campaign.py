@@ -3,7 +3,11 @@ __date__ = '10/05/17'
 
 import json
 import os
-from reporter.models.json_model import JsonModel
+import campaign_manager.selected_functions as selected_functions
+
+from flask import render_template
+
+from campaign_manager.models.json_model import JsonModel
 
 
 class Campaign(JsonModel):
@@ -63,6 +67,28 @@ class Campaign(JsonModel):
                         setattr(self, key, value)
             except json.decoder.JSONDecodeError:
                 raise JsonModel.CorruptedFile
+
+    def render_side_bar(self):
+        """Testing for render sidebar"""
+        campaing_ui = ''
+        for selected_function_name in self.selected_functions:
+            try:
+                SelectedFunction = getattr(
+                    selected_functions, selected_function_name)
+                selected_function = SelectedFunction(self)
+
+                context = {
+                    'selected_function_name': selected_function_name,
+                    'widget': selected_function.get_ui_html()
+                }
+                campaing_ui += render_template(
+                    'campaign_widget/sidebar.html',
+                    **context
+                )
+            except AttributeError:
+                pass
+
+        return campaing_ui
 
     @staticmethod
     def get_json_folder():

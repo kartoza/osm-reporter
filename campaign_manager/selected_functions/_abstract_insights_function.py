@@ -3,6 +3,7 @@ __date__ = '17/05/17'
 
 from abc import ABCMeta
 from flask import render_template
+from jinja2.exceptions import TemplateNotFound
 
 
 class AbstractInsightsFunction(object):
@@ -76,7 +77,7 @@ class AbstractInsightsFunction(object):
         # ---------------------------------
         return {}
 
-    def _get_html(self, html_name):
+    def _get_html(self, ui_type, html_name):
         """preprocess for get html function
         :param html_name: html name that need to be processed
         :type html_name: str
@@ -85,23 +86,29 @@ class AbstractInsightsFunction(object):
         :rtype: str
         """
         if not self.function_data:
-            self._call_function_provider()
-        return html_name.replace('.html')
+            self.run()
+
+        # return if html_name is None
+        if not html_name and html_name != '':
+            return ''
+
+        html_name = html_name.replace('.html', '')
+        try:
+            return render_template(
+                'campaign_widget/%s/%s.html' % (ui_type, html_name),
+                **self.function_data)
+        except TemplateNotFound:
+            return render_template(
+                'campaign_widget/widget_not_found.html')
 
     def get_ui_html(self):
         """Return ui in html format"""
-        html_file = self._get_html(self.get_ui_html_file())
-        return render_template(
-            'campaign_widget/ui/%s.html' % html_file, **self.function_data)
+        return self._get_html('ui', self.get_ui_html_file())
 
     def get_summary_html(self):
         """Return summary in html format"""
-        html_file = self._get_html(self.get_summary_html_file())
-        return render_template(
-            'campaign_widget/summary/%s.html' % html_file, **self.function_data)
+        return self._get_html('summary', self.get_ui_html_file())
 
     def get_details_html(self):
         """Return details in html format"""
-        html_file = self._get_html(self.get_details_html_file())
-        return render_template(
-            'campaign_widget/details/%s.html' % html_file, **self.function_data)
+        return self._get_html('details', self.get_ui_html_file())

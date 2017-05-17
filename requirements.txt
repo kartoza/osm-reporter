@@ -1,8 +1,7 @@
 flask
-flask-WTF
+flask-wtf
 raven
 cherrypy
-flask-wtf
 psycopg2
 Flask-SQLAlchemy
 Flask-Migrate
