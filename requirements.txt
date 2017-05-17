@@ -2,4 +2,8 @@ flask
 flask-WTF
 raven
 cherrypy
-
+flask-wtf
+psycopg2
+Flask-SQLAlchemy
+Flask-Migrate
+flask-admin
