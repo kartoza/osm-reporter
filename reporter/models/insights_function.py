@@ -12,14 +12,23 @@ class InsightsFunction(JsonModel):
     """
     uuid = ''
     insight_function = ''
-    parameters = []
-    category = []
-    output = ''
+    ui_template = ''
+    summary_template = ''
+    detail_template = ''
 
     def __init__(self, uuid):
         self.uuid = uuid
         self.json_path = InsightsFunction.get_json_file(uuid)
         self.parse_json_file()
+
+    def name(self):
+        """ return name of insight function
+        """
+        return '[%s] %s, %s, %s' % (
+            self.insight_function,
+            self.ui_template,
+            self.summary_template,
+            self.detail_template)
 
     def parse_json_file(self):
         """ Parse json file for this campaign.

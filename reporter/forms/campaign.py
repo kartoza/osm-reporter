@@ -29,7 +29,7 @@ class CampaignForm(FlaskForm):
     selected_functions = SelectMultipleField(
         u'Functions for this campaign',
         choices=[
-            (insights_function.uuid, insights_function.insight_function)
+            (insights_function.uuid, insights_function.name())
             for insights_function in InsightsFunction.all()
             ]
     )
