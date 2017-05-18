@@ -89,10 +89,6 @@
             if (!auth.authenticated()) {
                 window.location.replace("/campaign_manager/not-logged-in.html");
             }
-
-            if ($("#geometry").val()) {
-                drawnItems = L.geoJSON($.parseJSON($("#geometry").val()));
-            }
             $("#submit").click(function () {
                 $("#form").submit();
             });
@@ -115,6 +111,11 @@
             }).addTo(map);
 
             map.fitBounds(bounds);
+
+            if ($("#geometry").val()) {
+                drawnItems = L.geoJSON($.parseJSON($("#geometry").val()));
+                map.fitBounds(drawnItems.getBounds());
+            }
             map.addLayer(drawnItems);
             var drawControl = new L.Control.Draw({
                 draw: {

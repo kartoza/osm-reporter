@@ -1,6 +1,7 @@
 __author__ = 'Irwan Fathurrahman <irwan@kartoza.com>'
 __date__ = '10/05/17'
 
+import time
 import json
 import os
 import campaign_manager.selected_functions as selected_functions
@@ -29,6 +30,7 @@ class Campaign(JsonModel):
     def __init__(self, uuid):
         self.uuid = uuid
         self.json_path = Campaign.get_json_file(uuid)
+        self.edited_at = time.ctime(os.path.getmtime(self.json_path))
         self.parse_json_file()
 
     def update_data(self, dict, uploader):
@@ -78,8 +80,13 @@ class Campaign(JsonModel):
                     selected_functions, selected_function_name)
                 selected_function = SelectedFunction(self)
 
+                if selected_function.function_name:
+                    function_name = selected_function.function_name
+                else:
+                    function_name = selected_function_name
+
                 context = {
-                    'selected_function_name': selected_function_name,
+                    'selected_function_name': function_name,
                     'widget': selected_function.get_ui_html()
                 }
                 campaing_ui += render_template(

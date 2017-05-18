@@ -36,15 +36,24 @@ def get_campaign_sidebar(uuid):
 
 @campaign_manager.route('/campaign/<uuid>')
 def get_campaign(uuid):
-    import json
     from campaign_manager.models.campaign import Campaign
     """Get campaign details.
     """
     try:
         campaign = Campaign.get(uuid)
-        return Response(json.dumps(campaign.to_dict(), sort_keys=True))
+        context = campaign.to_dict()
+        context['oauth_consumer_key'] = OAUTH_CONSUMER_KEY
+        context['oauth_secret'] = OAUTH_SECRET
+        context['sidebar'] = campaign.render_side_bar()
+        return render_template(
+            'campaign_detail.html', **context)
     except Campaign.DoesNotExist:
-        return Response('Campaign not found')
+        context = dict(
+            oauth_consumer_key=OAUTH_CONSUMER_KEY,
+            oauth_secret=OAUTH_SECRET
+        )
+        return render_template(
+            'campaign_not_found.html', **context)
 
 
 @campaign_manager.route('/campaign/create', methods=['GET', 'POST'])
