@@ -1,6 +1,11 @@
 from flask import request, render_template, Response
-
 from campaign_manager import campaign_manager
+
+try:
+    from secret import OAUTH_CONSUMER_KEY, OAUTH_SECRET
+except ImportError:
+    OAUTH_CONSUMER_KEY = ''
+    OAUTH_SECRET = ''
 
 
 @campaign_manager.route('/')
@@ -10,15 +15,13 @@ def home():
     On this page a summary campaign manager view will shown.
     """
     context = dict(
-        testing='hello'
+        oauth_consumer_key=OAUTH_CONSUMER_KEY,
+        oauth_secret=OAUTH_SECRET
     )
     # noinspection PyUnresolvedReferences
     return render_template('index.html', **context)
 
 
-# -----------------------------------------------------------------
-# Campaigner
-# -----------------------------------------------------------------
 @campaign_manager.route('/campaign/<uuid>/sidebar')
 def get_campaign_sidebar(uuid):
     from campaign_manager.models.campaign import Campaign
@@ -59,16 +62,19 @@ def create_campaign():
         data.pop('submit')
 
         data['uuid'] = uuid.uuid4().hex
-        Campaign.create(data, "Irwan")
+        Campaign.create(data, form.uploader.data)
         return redirect(
             url_for(
                 'campaign_manager.get_campaign',
                 uuid=data['uuid'])
         )
-    context = {}
+    context = dict(
+        oauth_consumer_key=OAUTH_CONSUMER_KEY,
+        oauth_secret=OAUTH_SECRET
+    )
     context['action'] = '/campaign_manager/campaign/create'
     return render_template(
-        'create_campaign_form.html', form=form, context=context)
+        'create_campaign_form.html', form=form, **context)
 
 
 @campaign_manager.route('/campaign/edit/<uuid>', methods=['GET', 'POST'])
@@ -101,13 +107,29 @@ def edit_campaign(uuid):
                 data = form.data
                 data.pop('csrf_token')
                 data.pop('submit')
-                campaign.update_data(data, 'Irwan')
+                campaign.update_data(data, form.uploader.data)
                 return redirect(
                     url_for('campaign_manager.get_campaign',
                             uuid=campaign.uuid)
                 )
     except Campaign.DoesNotExist:
         return Response('Campaign not found')
+    context['oauth_consumer_key'] = OAUTH_CONSUMER_KEY
+    context['oauth_secret'] = OAUTH_SECRET
     context['action'] = '/campaign_manager/campaign/edit/%s' % uuid
     return render_template(
-        'create_campaign_form.html', form=form, context=context)
+        'create_campaign_form.html', form=form, **context)
+
+
+@campaign_manager.route('/land.html')
+def landing_auth():
+    """OSM auth landing page.
+    """
+    return render_template('land.html')
+
+
+@campaign_manager.route('/not-logged-in.html')
+def not_logged_in():
+    """Not logged in page.
+    """
+    return render_template('not_authenticated.html')
