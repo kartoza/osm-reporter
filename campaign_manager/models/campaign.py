@@ -8,6 +8,7 @@ import campaign_manager.selected_functions as selected_functions
 from flask import render_template
 
 from campaign_manager.models.json_model import JsonModel
+from campaign_manager.utilities import module_path
 
 
 class Campaign(JsonModel):
@@ -92,9 +93,8 @@ class Campaign(JsonModel):
 
     @staticmethod
     def get_json_folder():
-        file_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(
-            file_path, os.pardir, 'campaigns_data', 'campaign')
+            module_path(), 'campaigns_data', 'campaign')
 
     @staticmethod
     def serialize(dict):
