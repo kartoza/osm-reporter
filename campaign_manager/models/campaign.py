@@ -137,6 +137,22 @@ class Campaign(JsonModel):
         _file.close()
 
     @staticmethod
+    def all():
+        """Get all campaigns
+
+        :return: Campaigns that found or none
+        :rtype: [Campaign]
+        """
+        campaigns = []
+        for root, dirs, files in os.walk(Campaign.get_json_folder()):
+            for file in files:
+                try:
+                    campaigns.append(Campaign.get(os.path.splitext(file)[0]))
+                except Campaign.DoesNotExist:
+                    pass
+        return campaigns
+
+    @staticmethod
     def get(uuid):
         """Get campaign from uuid
 

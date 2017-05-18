@@ -1,5 +1,6 @@
 from flask import request, render_template, Response
 from campaign_manager import campaign_manager
+from campaign_manager.models.campaign import Campaign
 
 try:
     from secret import OAUTH_CONSUMER_KEY, OAUTH_SECRET
@@ -18,6 +19,7 @@ def home():
         oauth_consumer_key=OAUTH_CONSUMER_KEY,
         oauth_secret=OAUTH_SECRET
     )
+    context['campaigns'] = Campaign.all()
     # noinspection PyUnresolvedReferences
     return render_template('index.html', **context)
 
@@ -45,6 +47,7 @@ def get_campaign(uuid):
         context['oauth_consumer_key'] = OAUTH_CONSUMER_KEY
         context['oauth_secret'] = OAUTH_SECRET
         context['sidebar'] = campaign.render_side_bar()
+        context['campaigns'] = Campaign.all()
         return render_template(
             'campaign_detail.html', **context)
     except Campaign.DoesNotExist:
@@ -82,6 +85,7 @@ def create_campaign():
         oauth_secret=OAUTH_SECRET
     )
     context['action'] = '/campaign_manager/campaign/create'
+    context['campaigns'] = Campaign.all()
     return render_template(
         'create_campaign_form.html', form=form, **context)
 
@@ -126,6 +130,7 @@ def edit_campaign(uuid):
     context['oauth_consumer_key'] = OAUTH_CONSUMER_KEY
     context['oauth_secret'] = OAUTH_SECRET
     context['action'] = '/campaign_manager/campaign/edit/%s' % uuid
+    context['campaigns'] = Campaign.all()
     return render_template(
         'create_campaign_form.html', form=form, **context)
 
