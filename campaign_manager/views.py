@@ -1,7 +1,11 @@
 from flask import request, render_template, Response
 
 from campaign_manager import campaign_manager
-from secret import OAUTH_CONSUMER_KEY, OAUTH_SECRET
+try:
+    from secret import OAUTH_CONSUMER_KEY, OAUTH_SECRET
+except ImportError:
+    OAUTH_CONSUMER_KEY = ''
+    OAUTH_SECRET = ''
 
 
 @campaign_manager.route('/')
