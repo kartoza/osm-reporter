@@ -15,7 +15,61 @@ import zipfile
 import config
 from .osm_node_parser import OsmNodeParser
 from .osm_way_parser import OsmParser
+from queries import RESOURCES_MAP
 from . import LOGGER
+
+
+def overpass_resource_base_path(feature_type):
+    """Get the overpass resource base path according to the feature we extract.
+
+    :param feature_type: The type of feature :
+        buildings, building-points, roads, potential-idp, boundary-[1,11]
+    :type feature_type: str
+
+    :return The resource folder.
+    :rtype str
+    """
+    return os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            'resources',
+            'overpass',
+            RESOURCES_MAP[feature_type],
+            RESOURCES_MAP[feature_type]))
+
+
+def shapefile_resource_base_path(feature_type):
+    """Get the shapefile resource base path according to the feature we extract.
+
+    :param feature_type: The type of feature :
+        buildings, building-points, roads, potential-idp, boundary-[1,11]
+    :type feature_type: str
+
+    :return The resource folder.
+    :rtype str
+    """
+    return os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            'resources',
+            'shapefile',
+            RESOURCES_MAP[feature_type],
+            RESOURCES_MAP[feature_type]))
+
+
+def generic_shapefile_base_path():
+    """Get the generic shapefile resource base path.
+
+    :return The generic resource folder.
+    :rtype str
+    """
+    return os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            'resources',
+            'shapefile',
+            'generic',
+            'generic'))
 
 
 def get_totals(sorted_user_list):
@@ -374,7 +428,7 @@ def temp_dir(sub_dir='work'):
         try:
             os.makedirs(path, 0777)
         except OSError:
-            #one of the directories in the path already exists maybe
+            # one of the directories in the path already exists maybe
             pass
         # Reinstate the old mask for tmp
         os.umask(old_mask)
@@ -523,9 +577,9 @@ def which(name, flags=os.X_OK):
         return ['/usr/local/bin/%s' % name]
 
     result = []
-    #pylint: disable=W0141
+    # pylint: disable=W0141
     extensions = filter(None, os.environ.get('PATHEXT', '').split(os.pathsep))
-    #pylint: enable=W0141
+    # pylint: enable=W0141
     path = os.environ.get('PATH', None)
     # In c6c9b26 we removed this hard coding for issue #529 but I am
     # adding it back here in case the user's path does not include the
@@ -552,3 +606,15 @@ def which(name, flags=os.X_OK):
                 result.append(pext)
 
     return result
+
+
+def short_version(version):
+    """Get a shorter version, only with the major and minor version.
+
+    :param version: The version.
+    :type version: str
+
+    :return 'major.minor' version number.
+    :rtype float
+    """
+    return float('.'.join(version.split('.')[0:2]))

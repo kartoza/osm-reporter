@@ -1,5 +1,4 @@
 [![Stories in Ready](https://badge.waffle.io/timlinux/osm-reporter.png?label=ready)](https://waffle.io/timlinux/osm-reporter)
-[![Build Status](http://jenkins.linfiniti.com/buildStatus/icon?job=osm-reporter)](http://jenkins.linfiniti.com/job/osm-reporter/)
 
 # A simple tool for getting stats for an openstreetmap area.
 
@@ -18,10 +17,10 @@ code from osm-reporter mounted into the osm-reporter container.
 
 ```
 sudo apt-get install python-pip git
-sudo pip install fig
+sudo pip install docker-compose
 git clone git://github.com/kartoza/osm-reporter.git
 cd osm-reporter
-fig up -d
+docker-compose up -d
 ```
 
 Now make an nginx reverse proxy (or apache2 if you prefer) pointing to the
@@ -58,7 +57,7 @@ server {
 ```
 
 
-# Manual Install
+# Manual Install for deployment
 
 Prerequisites::
 
@@ -89,7 +88,7 @@ Then setup a venv::
     cd osm-reporter
     virtualenv venv
     source venv/bin/activate
-    pip install -r REQUIREMENTS.txt
+    pip install -r requirements.txt
 
 Then deploy under apache mod_wsgi::
 
@@ -128,6 +127,15 @@ Next restart apache::
 
 Now test - open chrome and visit: http://osm-reporter.localhost
 
+# Manual install for development
+
+Follow the install above and stop after setting up a venv.
+You don't need to configure apache, there is a lightweight development web server.
+You can run it::
+
+    python runserver.py
+
+and then visit http://127.0.0.1:5000/
 
 Config
 ======
@@ -170,19 +178,33 @@ TAG_NAMES :
 
     (list) tag names available for stats (default: ['building', 'highway'])
 
+OSM2PGSQL_OPTIONS :
+    (str) options for the osm2pgsql command line
+
+Osm2pgsql
+------------
+
+On some computers with less RAM than servers, you may adapt the import into postgis with osm2pgsql.
+For instance in your 'config' python module above ::
+    ``OSM2PGSQL_OPTIONS = '--cache-strategy sparse -C 1000'``
 
 Tests and QA
 ------------
 
 There is a test suite available, you can run it using nose e.g.::
 
-    PYTHONPATH=`pwd`/reporter:`pwd`:$(PYTHONPATH) nosetests -v --with-id \
+    PYTHONPATH=`pwd`/reporter:`pwd`:${PYTHONPATH} nosetests -v --with-id \
     --with-xcoverage --with-xunit --verbose --cover-package=reporter reporter
 
 On OSX
 
     export PYTHONPATH=`pwd`/reporter:`pwd`:$PYTHONPATH:venv/lib/python2.7/site-packages/; \
     nosetests -v --with-id  --with-xunit --verbose --cover-package=reporter reporter
+
+Using Docker
+
+    docker-compose build test
+    docker-compose run test
 
 Jenkins
 -------
@@ -214,4 +236,4 @@ Sentry is a service that collects exceptions and displays aggregate reports
 for them. You can view the sentry project we have running for osm-reporter
 here: http://sentry.linfiniti.com/osm-reporter/
 
-Tim Sutton & Yohan Boniface
+Tim Sutton, Etienne Trimaille & Yohan Boniface

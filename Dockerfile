@@ -12,14 +12,15 @@ RUN  dpkg-divert --local --rename --add /sbin/initctl
 # Or comment this line out if you do not with to use caching
 ADD 71-apt-cacher-ng /etc/apt/apt.conf.d/71-apt-cacher-ng
 
+RUN apt-get -y update
+RUN apt-get -y install osm2pgsql
+
 ADD requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
+
 ADD server.py /server.py
 # we will use a volume rather
 #ADD reporter /reporter
-
-RUN apt-get -y update
-RUN apt-get -y install postgis osm2pgsql
 
 # Open port 8080 so linked containers can see them
 EXPOSE 8080

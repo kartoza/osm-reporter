@@ -19,8 +19,12 @@ from .utilities import (
     get_totals, osm_nodes_by_user)
 from .osm import (
     get_osm_file,
-    extract_buildings_shapefile,
-    extract_roads_shapefile)
+    import_and_extract_shapefile)
+from .exceptions import (
+    OverpassTimeoutException,
+    OverpassBadRequestException,
+    OverpassConcurrentRequestException)
+from .queries import FEATURES, TAG_MAPPING
 from .static import static_file
 from . import LOGGER
 
@@ -31,9 +35,10 @@ def home():
 
     On this page a map and the report will be shown.
     """
+    default_tag = 'highway'
     sorted_user_list = []
     bbox = request.args.get('bbox', config.BBOX)
-    tag_name = request.args.get('obj', config.TAG_NAMES[0])
+    tag_name = request.args.get('obj', default_tag)
     error = None
     try:
         coordinates = split_bbox(bbox)
@@ -41,21 +46,30 @@ def home():
         error = "Invalid bbox"
         coordinates = split_bbox(config.BBOX)
     else:
+
+        if tag_name not in TAG_MAPPING.keys():
+            error = "Unsupported object type"
+            tag_name = default_tag
         try:
-            file_handle = get_osm_file(bbox, coordinates)
+            feature_type = TAG_MAPPING[tag_name]
+            file_handle = get_osm_file(coordinates, feature_type, 'meta')
+        except OverpassTimeoutException:
+            error = 'Timeout, try a smaller area.'
+        except OverpassBadRequestException:
+            error = 'Bad request.'
+        except OverpassConcurrentRequestException:
+            error = 'Please try again later, another query is running.'
         except urllib2.URLError:
-            error = "Bad request. Maybe the bbox is too big!"
+            error = 'Bad request.'
+
         else:
-            if not tag_name in config.TAG_NAMES:
-                error = "Unsupported object type"
-            else:
-                try:
-                    sorted_user_list = osm_object_contributions(
-                        file_handle, tag_name)
-                except xml.sax.SAXParseException:
-                    error = (
-                        'Invalid OSM xml file retrieved. Please try again '
-                        'later.')
+            try:
+                sorted_user_list = osm_object_contributions(
+                    file_handle, tag_name)
+            except xml.sax.SAXParseException:
+                error = (
+                    'Invalid OSM xml file retrieved. Please try again '
+                    'later.')
 
     node_count, way_count = get_totals(sorted_user_list)
 
@@ -64,6 +78,7 @@ def home():
     # Note: slit_bbox should better keep returning real floats
     coordinates = dict((k, repr(v)) for k, v in coordinates.iteritems())
 
+    download_url = '%s-shp' % TAG_MAPPING[tag_name]
     context = dict(
         sorted_user_list=sorted_user_list,
         way_count=way_count,
@@ -71,80 +86,70 @@ def home():
         user_count=len(sorted_user_list),
         bbox=bbox,
         current_tag_name=tag_name,
-        available_tag_names=config.TAG_NAMES,
+        download_url=download_url,
+        available_tag_names=TAG_MAPPING.keys(),
         error=error,
         coordinates=coordinates,
         display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
     )
-    #noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     return render_template('base.html', **context)
 
 
-@app.route('/roads-shp')
-def roads():
-    """View to download roads as a shp."""
-    bbox = request.args.get('bbox', config.BBOX)
-    # Get the QGIS version
-    # Currently 1, 2 are accepted, default to 1
-    # A different qml style file will be returned depending on the version
-    qgis_version = int(request.args.get('qgis_version', '1'))
-    # Optional parameter that allows the user to specify the filename for
-    # the downloaded roads.
-    output_prefix = request.args.get('output_prefix', 'roads')
-    #error = None
-    try:
-        coordinates = split_bbox(bbox)
-    except ValueError:
-        #error = "Invalid bbox"
-        #coordinates = split_bbox(config.BBOX)
-        abort(500)
-    else:
-        try:
-            file_handle = get_osm_file(bbox, coordinates)
-        except urllib2.URLError:
-            #error = "Bad request. Maybe the bbox is too big!"
-            abort(500)
+@app.route('/<feature_type>-shp')
+def download_feature(feature_type):
+    """Generic request to download OSM data.
 
-    try:
-        #noinspection PyUnboundLocalVariable
-        zip_file = extract_roads_shapefile(
-            file_handle.name, qgis_version, output_prefix)
-        f = open(zip_file)
-    except IOError:
+    :param feature_type The feature to extract.
+    :type feature_type str
+
+    :return A zip file
+    """
+    if feature_type not in FEATURES:
         abort(404)
-        return
-    return Response(f.read(), mimetype='application/zip')
 
-
-@app.route('/buildings-shp')
-def buildings():
-    """View to download buildings as a shp."""
     bbox = request.args.get('bbox', config.BBOX)
     # Get the QGIS version
-    # Currently 1, 2 are accepted, default to 1
+    # Currently 1, 2 are accepted, default to 2
     # A different qml style file will be returned depending on the version
-    qgis_version = int(request.args.get('qgis_version', '1'))
-    # Optional parameter that allows the user to specify the filename for
-    # the downloaded roads.
-    output_prefix = request.args.get('output_prefix', 'buildings')
-    #error = None
+    qgis_version = int(request.args.get('qgis_version', '2'))
+    # Optional parameter that allows the user to specify the filename.
+    output_prefix = request.args.get('output_prefix', feature_type)
+    # A different keywords file will be returned depending on the version.
+    inasafe_version = request.args.get('inasafe_version', None)
+    # Optional parameter that allows the user to specify the language for
+    # the legend in QGIS.
+    lang = request.args.get('lang', 'en')
+
+    # error = None
     try:
         coordinates = split_bbox(bbox)
     except ValueError:
-        #error = "Invalid bbox"
-        #coordinates = split_bbox(config.BBOX)
+        # error = "Invalid bbox"
+        # coordinates = split_bbox(config.BBOX)
         abort(500)
     else:
         try:
-            file_handle = get_osm_file(bbox, coordinates)
+            file_handle = get_osm_file(coordinates, feature_type, 'body')
+        except OverpassTimeoutException:
+            abort(408)
+        except OverpassBadRequestException:
+            abort(500)
+        except OverpassConcurrentRequestException:
+            abort(509)
         except urllib2.URLError:
-            #error = "Bad request. Maybe the bbox is too big!"
             abort(500)
 
     try:
-        #noinspection PyUnboundLocalVariable
-        zip_file = extract_buildings_shapefile(
-            file_handle.name, qgis_version, output_prefix)
+        # noinspection PyUnboundLocalVariable
+        zip_file = import_and_extract_shapefile(
+            feature_type,
+            file_handle.name,
+            qgis_version,
+            output_prefix,
+            inasafe_version,
+            lang)
+
         f = open(zip_file)
     except IOError:
         abort(404)
@@ -175,9 +180,18 @@ def user_status():
         LOGGER.exception(error + str(coordinates))
     else:
         try:
-            file_handle = get_osm_file(bbox, coordinates)
-        except urllib2.URLError:
+            file_handle = get_osm_file(coordinates)
+        except OverpassTimeoutException:
             error = "Bad request. Maybe the bbox is too big!"
+            LOGGER.exception(error + str(coordinates))
+        except OverpassConcurrentRequestException:
+            error = 'Please try again later, another query is running.'
+            LOGGER.exception(error + str(coordinates))
+        except OverpassBadRequestException:
+            error = "Bad request."
+            LOGGER.exception(error + str(coordinates))
+        except urllib2.URLError:
+            error = "Bad request."
             LOGGER.exception(error + str(coordinates))
         else:
             node_data = osm_nodes_by_user(file_handle, username)

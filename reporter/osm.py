@@ -5,6 +5,7 @@
 """
 import hashlib
 import urllib2
+import urllib
 import time
 import os
 import re
@@ -14,25 +15,34 @@ from shutil import copyfile
 from .utilities import temp_dir, unique_filename, zip_shp, which
 from . import config
 from . import LOGGER
+from queries import SQL_QUERY_MAP, OVERPASS_QUERY_MAP
+from utilities import (
+    shapefile_resource_base_path,
+    overpass_resource_base_path,
+    generic_shapefile_base_path)
+from exceptions import (
+    OverpassTimeoutException,
+    OverpassBadRequestException,
+    OverpassConcurrentRequestException)
+from metadata import metadata_files
 
 
-def get_osm_file(bbox, coordinates):
+def get_osm_file(coordinates, feature='all', overpass_verbosity='body'):
     """Fetch an osm file given a bounding box using the overpass API.
-
-    .. todo:: Refactor so that we don't need to pass the same param twice in
-        different forms!
-
-    :param bbox: Coordinates as a string
-        as passed in via the http request object.
-    :type bbox: str
 
     :param coordinates: Coordinates as a list in the form:
         [min lat, min lon, max lat, max lon]
 
+    :param feature: The type of feature to extract:
+        buildings, building-points, roads, potential-idp, boundary-[1,11]
+    :type feature: str
+
+    :param overpass_verbosity: Output verbosity in Overpass.
+        It can be body, skeleton, ids_only or meta.
+    :type overpass_verbosity: str
+
     :returns: A file which has been opened on the retrieved OSM dataset.
     :rtype: file
-
-    .. note:: bbox is min lat, min lon, max lat, max lon
 
         Coordinates look like this:
         {'NE_lng': 20.444537401199337,
@@ -59,29 +69,14 @@ def get_osm_file(bbox, coordinates):
                 <;);out+meta;
 
     Equivalent url (http encoded)::
-
     """
-    # This is my preferred way to query overpass since it only fetches back
-    # building features (we would adapt it to something similar for roads)
-    # so it is much more efficient. However it (the retrieved osm xml
-    # file) works for the report but not for the shp2pgsql stuff lower down.
-    # So for now it is commented out. Tim.
-    # url_path = (
-    #     'http://overpass-api.de/api/interpreter?'
-    #     'data=('
-    #     'node["building"]["building"!="no"]'
-    #     '(%(SW_lat)s,%(SW_lng)s,%(NE_lat)s,%(NE_lng)s);'
-    #     'way["building"]["building"!="no"]'
-    #     '(%(SW_lat)s,%(SW_lng)s,%(NE_lat)s,%(NE_lng)s);'
-    #     'relation["building"]["building"!="no"]'
-    #     '(%(SW_lat)s,%(SW_lng)s,%(NE_lat)s,%(NE_lng)s);'
-    #     '<;);out+meta;' % coordinates)
-    # Overpass query to fetch all features in extent
-    url_path = (
-        'http://overpass-api.de/api/interpreter?data='
-        '(node({SW_lat},{SW_lng},{NE_lat},{NE_lng});<;);out+meta;'
-        .format(**coordinates))
-    safe_name = hashlib.md5(bbox).hexdigest() + '.osm'
+    server_url = 'http://overpass-api.de/api/interpreter?data='
+    parameters = coordinates
+    parameters['print_mode'] = overpass_verbosity
+    query = OVERPASS_QUERY_MAP[feature].format(**parameters)
+    encoded_query = urllib.quote(query)
+    url_path = '%s%s' % (server_url, encoded_query)
+    safe_name = hashlib.md5(query).hexdigest() + '.osm'
     file_path = os.path.join(config.CACHE_DIR, safe_name)
     return load_osm_document(file_path, url_path)
 
@@ -91,13 +86,13 @@ def load_osm_document(file_path, url_path):
 
     To save bandwidth the file is not downloaded if it is less than 1 hour old.
 
+    :type file_path: object
+    :param file_path: The path on the filesystem to which the file should
+        be saved.
+
     :param url_path: Path (relative to the ftp root) from which the file
         should be retrieved.
     :type url_path: str
-
-    :param file_path: The path on the filesystem to which the file should
-        be saved.
-    :type file_path: str
 
     :returns: A file object for the the downloaded file.
     :rtype: file
@@ -136,54 +131,97 @@ def fetch_osm(file_path, url_path):
 
     """
     LOGGER.debug('Getting URL: %s', url_path)
-    request = urllib2.Request(url_path)
+    headers = {'User-Agent': 'InaSAFE'}
+    request = urllib2.Request(url_path, None, headers)
     try:
         url_handle = urllib2.urlopen(request, timeout=60)
+        data = url_handle.read()
+        regex = '<remark> runtime error:'
+        if re.search(regex, data):
+            raise OverpassTimeoutException
+
         file_handle = file(file_path, 'wb')
-        file_handle.write(url_handle.read())
+        file_handle.write(data)
         file_handle.close()
-    except urllib2.URLError:
-        LOGGER.exception('Bad Url or Timeout')
-        raise
+    except urllib2.URLError as e:
+        if e.code == 400:
+            LOGGER.exception('Bad request to Overpass')
+            raise OverpassBadRequestException
+        elif e.code == 419:
+            raise OverpassConcurrentRequestException
+
+        LOGGER.exception('Error with Overpass')
+        raise e
 
 
-def add_keyword_timestamp(keywords_file_path):
-    """Add the current date / time to the keywords file.
+def add_metadata_timestamp(metadata_file_path):
+    """Add the current date / time to the metadata file.
 
-    :param keywords_file_path: Keywords file path that the timestamp should be
+    :param metadata_file_path: Metadata file path that the timestamp should be
         written to.
-    :type keywords_file_path: str
+    :type metadata_file_path: str
     """
     time_stamp = time.strftime('%d-%m-%Y %H:%M')
-    keywords_file = file(keywords_file_path, 'ab')
-    keywords_file.write('date: %s' % time_stamp)
-    keywords_file.close()
+
+    extension = os.path.splitext(metadata_file_path)[1]
+
+    if extension == 'keywords':
+        keyword_file = file(metadata_file_path, 'ab')
+        keyword_file.write('date: %s' % time_stamp)
+        keyword_file.close()
+    else:
+        # Need to write this section : write date/time in XML file
+        # {{ datetime }} -> 18-06-2018 03:23
+        f = open(metadata_file_path, 'r')
+        file_data = f.read()
+        f.close()
+
+        new_data = file_data.replace('{{ datetime }}', time_stamp)
+
+        f = open(metadata_file_path, 'w')
+        f.write(new_data)
+        f.close()
 
 
-def extract_buildings_shapefile(
-        file_path, qgis_version=1, output_prefix=''):
-    """Convert the OSM xml file to a buildings shapefile.
+def import_and_extract_shapefile(
+        feature_type,
+        file_path,
+        qgis_version=2,
+        output_prefix='',
+        inasafe_version=None,
+        lang='en'):
+    """Convert the OSM xml file to a shapefile.
 
-    This is a multistep process:
+    This is a multi-step process:
         * Create a temporary postgis database
         * Load the osm dataset into POSTGIS with osm2pgsql and our custom
              style file.
         * Save the data out again to a shapefile
         * Zip the shapefile ready for user to download
 
+    :param feature_type: The feature to extract.
+    :type feature_type: str
+
     :param file_path: Path to the OSM file name.
     :type file_path: str
 
     :param qgis_version: Get the QGIS version. Currently 1,
-        2 are accepted, default to 1. A different qml style file will be
+        2 are accepted, default to 2. A different qml style file will be
         returned depending on the version
     :type qgis_version: int
 
     :param output_prefix: Base name for the shape file. Defaults to ''
-        which will result in an output file of 'buildings.shp'. Adding a
+        which will result in an output file of feature_type + '.shp'. Adding a
         prefix of e.g. 'test-' would result in a downloaded file name of
         'test-buildings.shp'. Allowed characters are [a-zA-Z-_0-9].
     :type output_prefix: str
+
+    :param inasafe_version: The InaSAFE version, to get correct metadata.
+    :type inasafe_version: str
+
+    :param lang: The language desired for the labels in the legend.
+        Example : 'en', 'fr', etc. Default is 'en'.
+    :type lang: str
 
     :returns: Path to zipfile that was created.
     :rtype: str
@@ -194,96 +232,175 @@ def extract_buildings_shapefile(
         LOGGER.exception(error)
         raise Exception(error)
 
-    feature_type = 'buildings'
     output_prefix += feature_type
 
-    # Used to extract the buildings as a shapefile from pg
-    # We don't store in an sql file as the sql needs to be escaped
-    # as it is passed as an inline command line option to pgsql2shp
-    export_query = (
-        '"SELECT st_transform(way, 4326) AS the_geom, '
-        'building AS building, '
-        '\\"building:structure\\" AS structure, '
-        '\\"building:walls\\" AS wall_type, '
-        '\\"building:roof\\" AS roof_type, '
-        '\\"building:levels\\" AS levels, '
-        'admin_level AS admin, '
-        '\\"access:roof\\" AS roof_access, '
-        '\\"capacity:persons\\" AS capacity, '
-        'religion, '
-        '\\"type:id\\" AS osm_type , '
-        '\\"addr:full\\" AS full_address, '
-        'name, '
-        'amenity, '
-        'leisure, '
-        '\\"building:use\\" AS use, '
-        'office, '
-        'type '
-        'FROM planet_osm_polygon '
-        'WHERE building != \'no\';"')
+    work_dir = temp_dir(sub_dir=feature_type)
+    directory_name = unique_filename(dir=work_dir)
+    db_name = os.path.basename(directory_name)
 
-    return perform_extract(
-        export_query,
+    import_osm_file(db_name, feature_type, file_path)
+    zip_file = extract_shapefile(
         feature_type,
-        file_path,
+        db_name,
+        directory_name,
+        qgis_version,
         output_prefix,
-        qgis_version)
+        inasafe_version,
+        lang)
+    drop_database(db_name)
+    return zip_file
 
 
-def extract_roads_shapefile(file_path, qgis_version=1, output_prefix=''):
-    """Convert the OSM xml file to a roads shapefile.
+def import_osm_file(db_name, feature_type, file_path):
+    """Import the OSM xml file into a postgis database.
 
-    .. note:: I know it is misleading, but osm2pgsql puts the roads into
-        planet_osm_line table not planet_osm_roads !
+    :param db_name: The database to use.
+    :type db_name: str
 
-    This is a multistep process:
+    :param feature_type: The feature to import.
+    :type feature_type: str
+
+    :param file_path: Path to the OSM file.
+    :type file_path: str
+    """
+    overpass_resource_path = overpass_resource_base_path(feature_type)
+    style_file = '%s.style' % overpass_resource_path
+
+    # Used to standarise types while data is in pg still
+    transform_path = '%s.sql' % overpass_resource_path
+    createdb_executable = which('createdb')[0]
+    createdb_command = '%s -T template_postgis %s' % (
+        createdb_executable, db_name)
+    osm2pgsql_executable = which('osm2pgsql')[0]
+    osm2pgsql_options = config.OSM2PGSQL_OPTIONS.encode(encoding='utf-8')
+    osm2pgsql_command = '%s -S %s -d %s %s %s' % (
+        osm2pgsql_executable,
+        style_file,
+        db_name,
+        osm2pgsql_options,
+        file_path)
+    psql_executable = which('psql')[0]
+    transform_command = '%s %s -f %s' % (
+        psql_executable, db_name, transform_path)
+
+    print createdb_command
+    call(createdb_command, shell=True)
+    print osm2pgsql_command
+    call(osm2pgsql_command, shell=True)
+    print transform_command
+    call(transform_command, shell=True)
+
+
+def drop_database(db_name):
+    """Remove a database.
+    :param db_name: The database
+    :type db_name: str
+    """
+    dropdb_executable = which('dropdb')[0]
+    dropdb_command = '%s %s' % (dropdb_executable, db_name)
+    print dropdb_command
+    call(dropdb_command, shell=True)
+
+
+def extract_shapefile(
+        feature_type,
+        db_name,
+        directory_name,
+        qgis_version=2,
+        output_prefix='',
+        inasafe_version=None,
+        lang='en'):
+    """Extract a database to a shapefile.
+
+    This is a multi-step process:
         * Create a temporary postgis database
         * Load the osm dataset into POSTGIS with osm2pgsql and our custom
              style file.
         * Save the data out again to a shapefile
         * Zip the shapefile ready for user to download
 
-    :param file_path: Path to the OSM file name.
-    :type file_path: str
+    :param feature_type: The feature to extract.
+    :type feature_type: str
+
+    :param db_name: The database to extract.
+    :type db_name: str
+
+    :param directory_name: The directory to use for the extract.
+    :type directory_name: str
 
     :param qgis_version: Get the QGIS version. Currently 1,
-        2 are accepted, default to 1. A different qml style file will be
+        2 are accepted, default to 2. A different qml style file will be
         returned depending on the version
     :type qgis_version: int
 
-    :param output_prefix: Base name for the shape file. Defaults to 'roads'
-        which will result in an output file of 'roads.shp'.  Adding a
+    :param output_prefix: Base name for the shape file. Defaults to ''
+        which will result in an output file of feature_type + '.shp'. Adding a
         prefix of e.g. 'test-' would result in a downloaded file name of
-        'test-roads.shp'. Allowed characters are [a-zA-Z-_0-9].
+        'test-buildings.shp'. Allowed characters are [a-zA-Z-_0-9].
     :type output_prefix: str
+
+    :param inasafe_version: The InaSAFE version, to get correct metadata.
+    :type inasafe_version: str
+
+    :param lang: The language desired for the labels in the legend.
+        Example : 'en', 'fr', etc. Default is 'en'.
+    :type lang: str
 
     :returns: Path to zipfile that was created.
     :rtype: str
 
     """
-    if not check_string(output_prefix):
-        error = 'Invalid output prefix: %s' % output_prefix
-        LOGGER.exception(error)
-        raise Exception(error)
-    feature_type = 'roads'
-    output_prefix += feature_type
-    # Used to extract the roads as a shapefile from pg
-    # We don't store in an sql file as the sql needs to be escaped
-    # as it is passed as an inline command line option to pgsql2shp
-    export_query = (
-        '"SELECT st_transform(way, 4326) AS the_geom, '
-        '"name", '
-        'highway as osm_type,'
-        'type '
-        'FROM planet_osm_line '
-        'WHERE highway != \'no\';"')
 
-    return perform_extract(
-        export_query,
-        feature_type,
-        file_path,
-        output_prefix,
-        qgis_version)
+    # Extract
+    os.makedirs(directory_name)
+    shapefile_resource_path = shapefile_resource_base_path(feature_type)
+
+    shape_path = os.path.join(directory_name, '%s.shp' % output_prefix)
+
+    if qgis_version > 1:
+        qml_source_path = '%s-%s.qml' % (shapefile_resource_path, lang)
+        if not os.path.isfile(qml_source_path):
+            qml_source_path = '%s-en.qml' % shapefile_resource_path
+    else:
+        qml_source_path = '%s-qgis1.qml' % shapefile_resource_path
+
+    qml_dest_path = os.path.join(directory_name, '%s.qml' % output_prefix)
+
+    license_source_path = '%s.license' % generic_shapefile_base_path()
+    license_dest_path = os.path.join(
+        directory_name, '%s.license' % output_prefix)
+    prj_source_path = '%s.prj' % generic_shapefile_base_path()
+    prj_dest_path = os.path.join(
+        directory_name, '%s.prj' % output_prefix)
+
+    pgsql2shp_executable = which('pgsql2shp')[0]
+    pgsql2shp_command = '%s -f %s %s %s' % (
+        pgsql2shp_executable, shape_path, db_name, SQL_QUERY_MAP[feature_type])
+
+    # Now run the commands in sequence:
+    print pgsql2shp_command
+    call(pgsql2shp_command, shell=True)
+    copyfile(qml_source_path, qml_dest_path)
+
+    metadata = metadata_files(
+        inasafe_version, lang, feature_type, output_prefix)
+
+    for destination, source in metadata.iteritems():
+        source_path = '%s%s' % (shapefile_resource_path, source)
+        destination_path = os.path.join(directory_name, destination)
+        copyfile(source_path, destination_path)
+        add_metadata_timestamp(destination_path)
+
+    # Generic files
+    copyfile(prj_source_path, prj_dest_path)
+    copyfile(license_source_path, license_dest_path)
+
+    # Now zip it up and return the path to the zip, removing the original shp
+    zipfile = zip_shp(shape_path, extra_ext=[
+        '.qml', '.keywords', '.license', '.xml'], remove_file=True)
+    print 'Shape written to %s' % shape_path
+
+    return zipfile
 
 
 def check_string(text, search=re.compile(r'[^A-Za-z0-9-_]').search):
@@ -298,106 +415,3 @@ def check_string(text, search=re.compile(r'[^A-Za-z0-9-_]').search):
     :return: bool
     """
     return not bool(search(text))
-
-
-def perform_extract(
-        export_query,
-        feature_type,
-        file_path,
-        output_prefix,
-        qgis_version):
-    """
-    Generic method to perform an extract for a feature type.
-
-    :param export_query: A suitable query for extracting data from the OSM
-        file which has been loaded into postgresql. See one of the calling
-        functions for an example of this.
-    :type export_query: str
-
-    :param feature_type: The type of feature to extract. Currently 'roads' and
-        'buildings' are supported - more to be added in the future.
-    :type feature_type: str
-
-    :param file_path: Path to the OSM file name.
-    :type file_path: str
-
-    :param qgis_version: Get the QGIS version. Currently 1,
-        2 are accepted, default to 1. A different qml style file will be
-        returned depending on the version
-    :type qgis_version: int
-
-    :param output_prefix: Base name for the shape file. Defaults to 'roads'
-        which will result in an output file of 'roads.shp'.  Adding a
-        prefix of e.g. 'test-' would result in a downloaded file name of
-        'test-roads.shp'. Allowed characters are [a-zA-Z-_0-9].
-    :type output_prefix: str
-
-    :returns: Path to zipfile that was created.
-    :rtype: str
-
-    """
-    work_dir = temp_dir(sub_dir=feature_type)
-    directory_name = unique_filename(dir=work_dir)
-    os.makedirs(directory_name)
-    resource_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'resources', feature_type))
-    style_file = os.path.join(resource_path, '%s.style' % feature_type)
-    db_name = os.path.basename(directory_name)
-    shape_path = os.path.join(directory_name, '%s.shp' % output_prefix)
-    if qgis_version > 1:
-        qml_source_path = os.path.join(
-            resource_path, '%s.qml' % feature_type)
-    else:
-        qml_source_path = os.path.join(
-            resource_path, '%s-qgis1.qml' % feature_type)
-    qml_dest_path = os.path.join(
-        directory_name, '%s.qml' % output_prefix)
-    keywords_source_path = os.path.join(
-        resource_path, '%s.keywords' % feature_type)
-    keywords_dest_path = os.path.join(
-        directory_name, '%s.keywords' % output_prefix)
-    license_source_path = os.path.join(
-        resource_path, '%s.license' % feature_type)
-    license_dest_path = os.path.join(
-        directory_name, '%s.license' % output_prefix)
-    prj_source_path = os.path.join(
-        resource_path, '%s.prj' % feature_type)
-    prj_dest_path = os.path.join(
-        directory_name, '%s.prj' % output_prefix)
-    # Used to standarise types while data is in pg still
-    transform_path = os.path.join(resource_path, 'transform.sql')
-    createdb_executable = which('createdb')[0]
-    createdb_command = '%s -T template_postgis %s' % (
-        createdb_executable, db_name)
-    osm2pgsql_executable = which('osm2pgsql')[0]
-    osm2pgsql_command = '%s -S %s -d %s %s' % (
-        osm2pgsql_executable, style_file, db_name, file_path)
-    psql_executable = which('psql')[0]
-    transform_command = '%s %s -f %s' % (
-        psql_executable, db_name, transform_path)
-    pgsql2shp_executable = which('pgsql2shp')[0]
-    pgsql2shp_command = '%s -f %s %s %s' % (
-        pgsql2shp_executable, shape_path, db_name, export_query)
-    dropdb_executable = which('dropdb')[0]
-    dropdb_command = '%s %s' % (dropdb_executable, db_name)
-    # Now run the commands in sequence:
-    print createdb_command
-    call(createdb_command, shell=True)
-    print osm2pgsql_command
-    call(osm2pgsql_command, shell=True)
-    print transform_command
-    call(transform_command, shell=True)
-    print pgsql2shp_command
-    call(pgsql2shp_command, shell=True)
-    print dropdb_command
-    call(dropdb_command, shell=True)
-    copyfile(prj_source_path, prj_dest_path)
-    copyfile(qml_source_path, qml_dest_path)
-    copyfile(keywords_source_path, keywords_dest_path)
-    copyfile(license_source_path, license_dest_path)
-    add_keyword_timestamp(keywords_dest_path)
-    # Now zip it up and return the path to the zip, removing the original shp
-    zipfile = zip_shp(shape_path, extra_ext=[
-        '.qml', '.keywords', '.license'], remove_file=True)
-    print 'Shape written to %s' % shape_path
-    return zipfile

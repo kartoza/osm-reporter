@@ -15,6 +15,7 @@ from reporter.utilities import (
     interpolated_timeline,
     average_for_active_days,
     best_active_day,
+    short_version,
     worst_active_day)
 
 
@@ -53,7 +54,7 @@ class UtilitiesTestCase(LoggedTestCase):
             'expected_osm_building_contributions.txt'
         ), 'rb').read())
 
-        #noinspection PyPep8Naming
+        # noinspection PyPep8Naming
         self.maxDiff = None
         print contributor_list
         self.assertListEqual(contributor_list, expected_list)
@@ -83,7 +84,7 @@ class UtilitiesTestCase(LoggedTestCase):
             '["2012-12-09",0],'
             '["2012-12-10",1]]')
         result = interpolated_timeline(time_line)
-        #noinspection PyPep8Naming
+        # noinspection PyPep8Naming
         self.maxDiff = None
         self.assertEqual(expected_result, result)
 
@@ -113,3 +114,9 @@ class UtilitiesTestCase(LoggedTestCase):
         expected_result = 1
         result = worst_active_day(time_line)
         self.assertEqual(expected_result, result)
+
+    def test_short_version(self):
+        """Test the inasafe version."""
+        self.assertEquals(short_version('3.2.0.dev-dbb84de'), 3.2)
+        self.assertEquals(short_version('3.2.0'), 3.2)
+        self.assertEquals(short_version('3.2'), 3.2)

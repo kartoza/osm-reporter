@@ -8,8 +8,7 @@ import os
 from reporter.utilities import LOGGER
 from reporter.osm import (
     load_osm_document,
-    extract_buildings_shapefile,
-    extract_roads_shapefile,
+    import_and_extract_shapefile,
     check_string)
 from reporter.test.helpers import FIXTURE_PATH
 
@@ -45,7 +44,7 @@ class OsmTestCase(LoggedTestCase):
         message = 'load_osm_document from overpass content check failed.'
         assert 'Jacoline' in string, message
 
-        #file_handle = load_osm_document(myFilePath, url)
+        # file_handle = load_osm_document(myFilePath, url)
         file_time = os.path.getmtime(file_path)
         #
         # This one should be cached now....
@@ -55,16 +54,9 @@ class OsmTestCase(LoggedTestCase):
         message = 'load_osm_document cache test failed.'
         self.assertEqual(file_time, file_time2, message)
 
-    def test_extract_buildings_shapefile(self):
-        """Test the osm to shp converter."""
-        zip_path = extract_buildings_shapefile(FIXTURE_PATH)
-        #print zip_path
-        self.assertTrue(os.path.exists(zip_path), zip_path)
-
-    def test_extract_roads_shapefile(self):
+    def test_import_and_extract_shapefile(self):
         """Test the roads to shp converter."""
-        zip_path = extract_roads_shapefile(FIXTURE_PATH)
-        #print zip_path
+        zip_path = import_and_extract_shapefile('buildings', FIXTURE_PATH)
         self.assertTrue(os.path.exists(zip_path), zip_path)
 
     def test_check_string(self):
@@ -81,4 +73,3 @@ class OsmTestCase(LoggedTestCase):
             self.assertTrue(
                 check_string(good),
                 '%s should be acceptible' % good)
-
