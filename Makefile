@@ -13,6 +13,13 @@ run:
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) up -d web
 
+log:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Showing flask logs in production mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) -t logs web
+
 build:
 	@echo
 	@echo "------------------------------------------------------------------"
@@ -85,10 +92,3 @@ run-dev:
 	@echo "You can access it on http://localhost:64002"
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) up -d dev
-
-log:
-	@echo
-	@echo "------------------------------------------------------------------"
-	@echo "Showing flask logs in development mode"
-	@echo "------------------------------------------------------------------"
-	@docker-compose -p $(PROJECT_ID) logs dev
