@@ -20,11 +20,12 @@ sudo apt-get install python-pip git
 sudo pip install docker-compose
 git clone git://github.com/kartoza/osm-reporter.git
 cd osm-reporter
-docker-compose up -d
+docker-compose up -d web
 ```
 
-Now make an nginx reverse proxy (or apache2 if you prefer) pointing to the
-running container. e.g.:
+If you like you can change the port number in the docker compose and run the site behind an nginx reverse proxy (or apache2 if you prefer) pointing to the running container. e.g.:
+
+**Note:** See our troubleshooting section below if running on docker.
 
 ```
 upstream osm-reporter {
@@ -274,5 +275,34 @@ Using Docker
 Sentry is a service that collects exceptions and displays aggregate reports
 for them. You can view the sentry project we have running for osm-reporter
 here: http://sentry.kartoza.com/osm-reporter/
+
+# Troubleshooting
+
+
+**Issue:** I deployed under docker and it seems my disk is filling up with the container.
+
+**Answer:** Although the application is stateless, if keeps lots of logs. If your deployment gets lots of traffic those logs in docker can consume lots of disk space. As a short term fix you can simple remove the container and redeploy:
+
+```
+root@osm ~/osm-reporter # docker-compose kill
+Killing osmreporter_web ... done
+Killing osmreporter_db ... done
+root@osm ~/osm-reporter # docker-compose rm
+Going to remove osmreporter_web, osmreporter_db
+Are you sure? [yN] y
+Removing osmreporter_web ... done
+Removing osmreporter_db ... done
+root@osm ~/osm-reporter # df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            3.9G     0  3.9G   0% /dev
+tmpfs           799M   84M  716M  11% /run
+/dev/sda1       188G  5.3G  173G   3% /
+tmpfs           3.9G   80K  3.9G   1% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           3.9G     0  3.9G   0% /sys/fs/cgroup
+tmpfs           799M     0  799M   0% /run/user/0
+root@osm ~/osm-reporter # docker-compose up -d web
+```
+
 
 Tim Sutton, Etienne Trimaille & Yohan Boniface
