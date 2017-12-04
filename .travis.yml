@@ -10,13 +10,12 @@ cache:
     #- /tmp # cache any previously downloaded .osm files
   timeout: 1000
 compiler: clang
+dist: trusty
 addons:
-  postgresql: "9.6"
+  postgresql: "9.5"
   apt:
-    sources:
-      - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'  # postgis
     packages:
-      # Check that legacy scripts are available before upgrading postgis - they are required!
+      - postgresql-9.5-postgis-2.3
       - osm2pgsql
 # python defs need to be here as well as in include for test matrix
 # see https://docs.travis-ci.com/user/customizing-the-build#Explicitly-Included-Jobs-need-complete-definitions
