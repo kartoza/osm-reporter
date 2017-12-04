@@ -1,3 +1,6 @@
+# See kartoza rancher catalogue
+# for production deployment docker-compose.
+# Use this one for dev work
 db:
   image: kartoza/postgis:9.4-2.1
   hostname: db
@@ -9,7 +12,7 @@ db:
 web:
   #image: kartoza/osm-reporter
   build: .
-  dockerfile: Dockerfile
+  dockerfile: Dockerfile.dev
   hostname: web
   container_name: osmreporter_web
   environment:
