@@ -201,7 +201,7 @@
           </field>
           <value_map>
             <gco:Dictionary>
-                {&quot;recreation&quot;: [&quot;Sports Facility&quot;], &quot;public facility&quot;: [&quot;Fire Station&quot;, &quot;Police Station&quot;, &quot;Public Building&quot;], &quot;government&quot;: [&quot;Government&quot;], &quot;residential&quot;: [&quot;Residential&quot;], &quot;commercial&quot;: [&quot;Commercial&quot;, &quot;Industrial&quot;, &quot;Supermarket&quot;], &quot;other&quot;: [&quot;Utility&quot;], &quot;health&quot;: [&quot;Clinic/Doctor&quot;, &quot;Hospital&quot;], &quot;education&quot;: [&quot;School&quot;, &quot;University/College&quot;], &quot;place of worship&quot;: [&quot;Place of Worship - Islam&quot;, &quot;Place of Worship - Unitarian&quot;, &quot;Place of Worship - Buddhist&quot;, &quot;Place of Worship&quot;]}
+                {&quot;primary&quot;: [&quot;Primary link&quot;, &quot;Primary road&quot;], &quot;motorway&quot;: [&quot;Motorway link&quot;, &quot;Motorway or highway&quot;], &quot;other&quot;: [&quot;Road, residential, living street, etc.&quot;], &quot;path&quot;: [&quot;Cycleway, footpath, etc.&quot;, &quot;Track&quot;], &quot;local&quot;: [&quot;Tertiary link&quot;, &quot;Tertiary&quot;], &quot;secondary&quot;: [&quot;Secondary link&quot;, &quot;Secondary&quot;]}
             </gco:Dictionary>
           </value_map>
           <layer_geometry>
