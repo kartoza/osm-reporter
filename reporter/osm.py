@@ -11,7 +11,6 @@ import hashlib
 import time
 import os
 import re
-import sys
 import datetime
 from subprocess import call
 from shutil import copyfile

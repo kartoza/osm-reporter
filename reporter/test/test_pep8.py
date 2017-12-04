@@ -16,6 +16,9 @@ class TestPep8(unittest.TestCase):
 
     """Test Python style."""
 
+    @unittest.skipIf(
+        os.environ.get('ON_TRAVIS', False),
+        'This test is not set up for travis yet.')
     def test_pep8(self):
         """Test if the code is PEP8 compliant."""
         if os.environ.get('ON_TRAVIS', False):
@@ -60,6 +63,7 @@ class TestPep8(unittest.TestCase):
             'Hey mate, go back to your keyboard :) (expected %s, got %s '
             'lines from PEP8.)' % (default_number_lines, lines))
         self.assertEquals(lines, 0, message)
+
 
 if __name__ == '__main__':
     unittest.main()
