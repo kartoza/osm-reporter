@@ -21,8 +21,6 @@ RUN pip install -r requirements.txt
 ADD reporter /reporter
 
 ADD server.py /server.py
-# we will use a volume rather
-#ADD reporter /reporter
 
 # Open port 8080 so linked containers can see them
 EXPOSE 8080

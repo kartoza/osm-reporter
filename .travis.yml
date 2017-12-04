@@ -11,7 +11,7 @@ cache:
   timeout: 1000
 compiler: clang
 addons:
-  postgresql: "9.4"
+  postgresql: "9.6"
   apt:
     sources:
       - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'  # postgis
