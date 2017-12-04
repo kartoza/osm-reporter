@@ -20,43 +20,13 @@ sudo apt-get install python-pip git
 sudo pip install docker-compose
 git clone git://github.com/kartoza/osm-reporter.git
 cd osm-reporter
+# "make up" is an alias for the following command
 docker-compose up -d web
 ```
 
-If you like you can change the port number in the docker compose and run the site behind an nginx reverse proxy (or apache2 if you prefer) pointing to the running container. e.g.:
+If you like you can change the port number in the docker compose and run the site behind an nginx reverse proxy (or apache2 if you prefer) pointing to the running container. e.g. check `deployment/nginx/osm.inasafe.org.nginx.conf`:
 
 **Note:** See our troubleshooting section below if running on docker.
-
-```
-upstream osm-reporter {
-    server 127.0.0.1:64000;
-}
-
-server {
-
-    # OTF gzip compression
-    gzip on;
-    gzip_min_length 860;
-    gzip_comp_level 5;
-    gzip_proxied expired no-cache no-store private auth;
-    gzip_types text/plain application/xml application/x-javascript text/xml text/css application/json;
-    gzip_disable “MSIE [1-6].(?!.*SV1)”;
-
-    # the port your site will be served on
-    listen      80;
-    # the domain name it will serve for
-    server_name osm.linfiniti.com osm.kartoza.com osm.inasafe.org;
-    charset     utf-8;
-
-    # max upload size, adjust to taste
-    client_max_body_size 15M;
-
-    location / {
-        proxy_pass http://osm-reporter;
-    }
-}
-```
-
 
 # Manual Install for deployment
 
