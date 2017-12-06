@@ -10,16 +10,14 @@ cache:
     #- /tmp # cache any previously downloaded .osm files
   timeout: 1000
 compiler: clang
+dist: trusty
 addons:
-  postgresql: "9.4"
+  postgresql: "9.5"
   apt:
-    sources:
-      - sourceline: 'ppa:ubuntugis/ubuntugis-unstable'  # postgis
     packages:
-      # Check that legacy scripts are available before upgrading postgis - they are required!
-      - postgresql-9.4-postgis-2.1
-      - osm2pgsql
+      - postgresql-9.5-postgis-2.3
       - postgis
+      - osm2pgsql
 # python defs need to be here as well as in include for test matrix
 # see https://docs.travis-ci.com/user/customizing-the-build#Explicitly-Included-Jobs-need-complete-definitions
 python:
@@ -83,16 +81,17 @@ install:
 
 before_script:
   - echo "Build starting on " `date`
+  - psql -U postgres -c "create extension postgis"
   - psql -U postgres -c "create database template_postgis encoding 'UTF8' TEMPLATE template0;"
   - psql -U postgres -c "update pg_database set datistemplate=true where datname='template_postgis';"
   - psql -U postgres -c "create extension postgis;" template_postgis 
   - ls -lah /usr/share/postgresql/
-  - ls -lah /usr/share/postgresql/9.4/
-  - ls -lah /usr/share/postgresql/9.4/contrib/
+  - ls -lah /usr/share/postgresql/9.5/
+  - ls -lah /usr/share/postgresql/9.5/contrib/
   # Check that legacy scripts are available before upgrading postgis to a newer version than 2.1 - they are required!
-  - ls -lah /usr/share/postgresql/9.4/contrib/postgis-2.1/
-  - psql -U postgres template_postgis < /usr/share/postgresql/9.4/contrib/postgis-2.1/legacy_minimal.sql
-  - psql -U postgres template_postgis < /usr/share/postgresql/9.4/contrib/postgis-2.1/legacy_gist.sql
+  - ls -lah /usr/share/postgresql/9.5/contrib/postgis-2.3/
+  - psql -U postgres template_postgis < /usr/share/postgresql/9.5/contrib/postgis-2.3/legacy_minimal.sql
+  - psql -U postgres template_postgis < /usr/share/postgresql/9.5/contrib/postgis-2.3/legacy_gist.sql
   - echo "Databases:"
   - psql -l
   - which pgsql2shp
