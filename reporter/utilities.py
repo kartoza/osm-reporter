@@ -568,7 +568,7 @@ def which(name, flags=os.X_OK):
     :param flags: Arguments to L{os.access}.
 
     :rtype: C{list}
-    :param: A list of the full paths to files found, in the
+    :param: A list of the full paths for files found, in the
     order in which they were found.
     """
     if os.path.exists('/usr/bin/%s' % name):
@@ -586,6 +586,9 @@ def which(name, flags=os.X_OK):
     # adding it back here in case the user's path does not include the
     # gdal binary dir on OSX but it is actually there. (TS)
     if sys.platform == 'darwin':  # Mac OS X
+        postgis_prefix = (
+            '/Applications/Postgres.app/Contents/Versions/9.4/bin/')
+        path = '%s:%s' % (path, postgis_prefix)
         gdal_prefix = (
             '/Library/Frameworks/GDAL.framework/'
             'Versions/1.10/Programs/')
