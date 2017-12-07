@@ -7,7 +7,9 @@ Views to handle url requests. Flask main entry point is also defined here.
 :license: GPLv3, see LICENSE for more details.
 """
 
+import os
 import optparse
+import datetime
 import xml
 from flask import request, jsonify, render_template, Response, abort
 # App declared directly in __init__ as per
@@ -148,6 +150,78 @@ def download_feature(feature_type):
             abort(509)
         except URLError:
             abort(500)
+
+    # This is for logging requests so we can see what queries we received
+    date_time = datetime.datetime.now()
+
+    log_data = {
+        'feature_type': feature_type,
+        'qgis_version': qgis_version,
+        'inasafe_version': inasafe_version,
+        'year': date_time.year,
+        'month': date_time.month,
+        'day': date_time.day,
+        'hour': date_time.hour,
+        'minute': date_time.minute,
+        'second': date_time.second
+    }
+    # add keys for SW_lng, SW_lat, NE_lng, etc.
+    # to our log and write the log file out...
+    log_data.update(coordinates)
+    log_file_name = (
+        '{year}{month}{day}-{hour}{minute}{second}.geojson').format(**log_data)
+    log_path = os.path.join(config.LOG_DIR, log_file_name)
+    # Note that all the double {{ will be rendered as single below
+    # They need to be double so that python does not confuse them as
+    # string interpolators
+    log_message = """
+    {{
+        "type": "FeatureCollection",
+        "features": [
+            {{
+                "type": "Feature",
+                "properties": {{
+                    "feature_type": "{feature_type}",
+                    "qgis_version": "{qgis_version}",
+                    "inasafe_version": "{inasafe_version}",
+                    "year": {year},
+                    "month": {month},
+                    "day": {day},
+                    "hour": {hour}
+                }},
+                "geometry": {{
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [
+                                {SW_lng},
+                                {NE_lat}
+                            ],
+                            [
+                                {NE_lng},
+                                {NE_lat}
+                            ],
+                            [
+                                {NE_lng},
+                                {SW_lat}
+                            ],
+                            [
+                                {SW_lng},
+                                {SW_lat}
+                            ],
+                            [
+                                {SW_lng},
+                                {NE_lat}
+                            ]
+                        ]
+                    ]
+                }}
+            }}
+        ]
+    }}""".format(**log_data)
+    log_file = open(log_path, "w")
+    log_file.write(log_message)
+    log_file.close()
 
     try:
         # noinspection PyUnboundLocalVariable

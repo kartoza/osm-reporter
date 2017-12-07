@@ -47,23 +47,23 @@ is in the path of the user running the server.
 You should also give the process that osm-reporter runs as createdb rights
 (needed to support the shape downloading feature). You should also have a
 postgis template named 'template_postgis' available on your system. Consult a
-postgis tutorial online to see how this is done. En example of setting this up
+postgis tutorial online to see how this is done. An example of setting this up
 under MacOS is provided below:
 
     export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin/
     psql
-    
+
 Now execute the following commands to create the template_postgis database:
 
     create database template_postgis encoding 'UTF8' TEMPLATE template0;
     update pg_database set datistemplate=true where datname='template_postgis';
-    
+
 
 Now execute the following bash commands to load the required legacy postgis
 support:
 
     psql template_postgis < "create extension postgis;"
-    psql template_postgis < /Applications/Postgres.app/Contents/Versions/9.4/share/postgresql/contrib/postgis-2.1/legacy_minimal.sql 
+    psql template_postgis < /Applications/Postgres.app/Contents/Versions/9.4/share/postgresql/contrib/postgis-2.1/legacy_minimal.sql
     psql template_postgis < /Applications/Postgres.app/Contents/Versions/9.4/share/postgresql/contrib/postgis-2.1/legacy_gist.sql
 
 
@@ -73,12 +73,13 @@ First clone:
     cd /home/web
     git clone git://github.com/timlinux/osm-reporter.git
 
-Then setup a venv:
+Then setup a venv (you may need to adjust the path to your python3
+executable):
 
     cd osm-reporter
-    virtualenv venv
+    virtualenv -p /usr/local/bin/python3.6 venv
     source venv/bin/activate
-    pip install -r requirements.txt
+    pip3 install -r requirements.txt
 
 Then deploy under apache mod_wsgi:
 
@@ -147,8 +148,8 @@ it. For example:
 
     export REPORTER_CONFIG_MODULE="path.to.the.module"
 
-Then you can override the config properties to fit your need. Note that you
-can override only the properties you need to, the other will fallback to
+Then you can override the config properties to fit your needs. Note that you
+can override only the properties you need to, the others will fallback to
 default values. For inspiration, you can have a look at
 :file:`reporter/config/default.py`
 
@@ -172,6 +173,10 @@ CACHE_DIR:
 
     (str) path to a dir where to cache the OSM files used by the backend
 
+LOG_DIR:
+
+    (str) path to a dir where to store request logs in geojson format
+
 TAG_NAMES:
 
     (list) tag names available for stats (default: ['building', 'highway'])
@@ -183,7 +188,7 @@ OSM2PGSQL_OPTIONS :
 
 On some computers with less RAM than servers, you may adapt the import into postgis with osm2pgsql.
 For instance in your 'config' python module above :
-  
+
     OSM2PGSQL_OPTIONS = '--cache-strategy sparse -C 1000'
 
 # Tests and QA
@@ -208,16 +213,16 @@ For selenium tests you need to install chromedriver:
 And ensure that the chromedriver executable is in your path:
 
     export PATH=$PATH:/usr/local/bin/chromedriver
-    
-(If you are using pycharm you could add this path to your test runner 
+
+(If you are using pycharm you could add this path to your test runner
 configuration.)
 
 Before you run the tests, be sure to launch the chromedriver:
 
     chromedriver
-    
-Brew installation of chromedriver will also give you notes on how to 
-run this via launchd if you do not feel inclined to start chromedriver 
+
+Brew installation of chromedriver will also give you notes on how to
+run this via launchd if you do not feel inclined to start chromedriver
 each time.
 
 Ensure you have your template_postgis etc. set up (described further up in
