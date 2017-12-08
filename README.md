@@ -137,6 +137,29 @@ includes the following:
 
 (Update these paths as needed to match your system)
 
+* Logging
+
+OSM-Reporter will log requests as geojson files - one file per request.
+The attributes of each geojson file will contain the following:
+
+* feature_type (building, roads etc.)
+* qgis_version
+* inasafe_version (if applicable)
+* year / month / day / hour of request
+* bounding box of request as a GeoJSON geometry
+
+You can use [geojson-merge](https://github.com/mapbox/geojson-merge) to
+combine these into a single file (e.g. for use in QGIS). We assume you
+have npm installed):
+
+```
+npm install --upgrade -g @mapbox/geojson-merge
+geojson-merge 2017**.geojson > combined.geojson
+```
+
+Where the above example would merge all log files from 2017 into a
+single log file.
+
 # Config
 
 You can optionally define a 'config' python module to override the default
@@ -153,12 +176,14 @@ can override only the properties you need to, the others will fallback to
 default values. For inspiration, you can have a look at
 :file:`reporter/config/default.py`
 
-*Available config*
+**Available config**
+
 
 CREW:
 
     (list) valid OSM users names of people actively working on your data
-        gathering project
+        gathering project. When set, an additional tag will be added
+        in the user profile areas to indicate those who are crew members.
 
 BBOX:
 
@@ -177,12 +202,24 @@ LOG_DIR:
 
     (str) path to a dir where to store request logs in geojson format
 
-TAG_NAMES:
+TAG_NAMES: (**TODO - verify if this is actually used.**)
 
     (list) tag names available for stats (default: ['building', 'highway'])
 
 OSM2PGSQL_OPTIONS :
     (str) options for the osm2pgsql command line
+
+**Setting config using environment variables**
+
+All of the above configuration options can also be managed by
+setting them as environment variables. e.g.
+
+```
+CREW=timlinux,gustry python runserver.py
+```
+
+Would run the application with a specific list of users in crew.
+
 
 # Osm2pgsql
 
