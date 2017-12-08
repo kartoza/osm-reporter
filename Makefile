@@ -18,7 +18,7 @@ log:
 	@echo "------------------------------------------------------------------"
 	@echo "Showing flask logs in production mode"
 	@echo "------------------------------------------------------------------"
-	@docker-compose -p $(PROJECT_ID) -t logs web
+	@docker-compose -p $(PROJECT_ID) logs -t web
 
 build:
 	@echo
@@ -84,6 +84,26 @@ build-dev:
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) build dev
 
+log-dev:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Showing flask logs in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) logs -t dev
+
+kill-dev:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Killing in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) kill dev
+
+rm-dev: kill-dev
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Removing in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) rm dev
 
 run-dev:
 	@echo

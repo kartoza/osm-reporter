@@ -7,6 +7,7 @@ Views to handle url requests. Flask main entry point is also defined here.
 :license: GPLv3, see LICENSE for more details.
 """
 
+from os.path import exists, join, dirname, abspath
 import os
 import optparse
 import datetime
@@ -140,16 +141,24 @@ def download_feature(feature_type):
         # coordinates = split_bbox(config.BBOX)
         abort(500)
     else:
-        try:
-            file_handle = get_osm_file(coordinates, feature_type, 'body')
-        except OverpassTimeoutException:
-            abort(408)
-        except OverpassBadRequestException:
-            abort(500)
-        except OverpassConcurrentRequestException:
-            abort(509)
-        except URLError:
-            abort(500)
+        local_osm_file = abspath(
+            join(dirname(__file__), 'resources', 'pbf', 'data.pbf'))
+        if not exists(local_osm_file):
+            LOGGER.info('Going to download data from overpass.')
+            try:
+                file_handle = get_osm_file(coordinates, feature_type, 'body')
+            except OverpassTimeoutException:
+                abort(408)
+            except OverpassBadRequestException:
+                abort(500)
+            except OverpassConcurrentRequestException:
+                abort(509)
+            except URLError:
+                abort(500)
+        else:
+            LOGGER.info(
+                'Local PBF file detected. We will not use the Overpass API.')
+            file_handle = open(local_osm_file, 'rb')
 
     # This is for logging requests so we can see what queries we received
     date_time = datetime.datetime.now()

@@ -281,6 +281,12 @@ Using Docker
 * Current test status develop: [![Build Status](https://travis-ci.org/kartoza/osm-reporter.svg?branch=develop)](https://travis-ci.org/kartoza/osm-reporter) and
 [![Code Health](https://landscape.io/github/kartoza/osm-reporter/develop/landscape.svg?style=flat)](https://landscape.io/github/kartoza/osm-reporter/develop)
 
+# Local file instead of Overpass API
+
+* Download PBF file from the internet
+* Rename it `data.pbf` and put it in the root folder `osm-reporter/reporter/resources/pbf/`.
+* OSM-Reporter will now skip Overpass and use this local OSM file.
+Be careful to download data which are included in your PBF file. The BBOX parameter will not be parsed.
 
 # Sentry
 
