@@ -1,32 +1,38 @@
 # coding=utf-8
-"""Views to handle url requests. Flask main entry point is also defined here.
+
+"""
+Views to handle url requests. Flask main entry point is also defined here.
+
 :copyright: (c) 2013 by Tim Sutton
 :license: GPLv3, see LICENSE for more details.
 """
 
-import urllib2
+from os.path import exists, join, dirname, abspath
+import os
 import optparse
+import datetime
 import xml
-
 from flask import request, jsonify, render_template, Response, abort
 # App declared directly in __init__ as per
 # http://flask.pocoo.org/docs/patterns/packages/#larger-applications
-from . import app
-from . import config
-from .utilities import (
+from reporter import app
+from reporter import config
+from reporter.utilities import (
     split_bbox,
     osm_object_contributions,
     get_totals, osm_nodes_by_user)
-from .osm import (
+from reporter.osm import (
     get_osm_file,
     import_and_extract_shapefile)
-from .exceptions import (
+from reporter.exceptions import (
     OverpassTimeoutException,
     OverpassBadRequestException,
     OverpassConcurrentRequestException)
-from .queries import FEATURES, TAG_MAPPING
-from .static import static_file
-from . import LOGGER
+from reporter.queries import FEATURES, TAG_MAPPING
+from reporter.static_files import static_file
+from reporter import LOGGER
+# noinspection PyPep8Naming
+from urllib.error import URLError
 
 
 @app.route('/')
@@ -39,6 +45,8 @@ def home():
     sorted_user_list = []
     bbox = request.args.get('bbox', config.BBOX)
     tag_name = request.args.get('obj', default_tag)
+    date_from = request.args.get('date_from', None)
+    date_to = request.args.get('date_to', None)
     error = None
     try:
         coordinates = split_bbox(bbox)
@@ -47,21 +55,25 @@ def home():
         coordinates = split_bbox(config.BBOX)
     else:
 
-        if tag_name not in TAG_MAPPING.keys():
+        if tag_name not in list(TAG_MAPPING.keys()):
             error = "Unsupported object type"
             tag_name = default_tag
         try:
             feature_type = TAG_MAPPING[tag_name]
-            file_handle = get_osm_file(coordinates, feature_type, 'meta')
+            file_handle = get_osm_file(
+                coordinates,
+                feature_type,
+                'meta',
+                date_from,
+                date_to)
         except OverpassTimeoutException:
             error = 'Timeout, try a smaller area.'
         except OverpassBadRequestException:
             error = 'Bad request.'
         except OverpassConcurrentRequestException:
             error = 'Please try again later, another query is running.'
-        except urllib2.URLError:
+        except URLError:
             error = 'Bad request.'
-
         else:
             try:
                 sorted_user_list = osm_object_contributions(
@@ -76,7 +88,7 @@ def home():
     # We need to manually cast float in string, otherwise floats are
     # truncated, and then rounds in Leaflet result in a wrong bbox
     # Note: slit_bbox should better keep returning real floats
-    coordinates = dict((k, repr(v)) for k, v in coordinates.iteritems())
+    coordinates = dict((k, repr(v)) for k, v in coordinates.items())
 
     download_url = '%s-shp' % TAG_MAPPING[tag_name]
     context = dict(
@@ -87,7 +99,7 @@ def home():
         bbox=bbox,
         current_tag_name=tag_name,
         download_url=download_url,
-        available_tag_names=TAG_MAPPING.keys(),
+        available_tag_names=list(TAG_MAPPING.keys()),
         error=error,
         coordinates=coordinates,
         display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
@@ -129,16 +141,96 @@ def download_feature(feature_type):
         # coordinates = split_bbox(config.BBOX)
         abort(500)
     else:
-        try:
-            file_handle = get_osm_file(coordinates, feature_type, 'body')
-        except OverpassTimeoutException:
-            abort(408)
-        except OverpassBadRequestException:
-            abort(500)
-        except OverpassConcurrentRequestException:
-            abort(509)
-        except urllib2.URLError:
-            abort(500)
+        local_osm_file = abspath(
+            join(dirname(__file__), 'resources', 'pbf', 'data.pbf'))
+        if not exists(local_osm_file):
+            LOGGER.info('Going to download data from overpass.')
+            try:
+                file_handle = get_osm_file(coordinates, feature_type, 'body')
+            except OverpassTimeoutException:
+                abort(408)
+            except OverpassBadRequestException:
+                abort(500)
+            except OverpassConcurrentRequestException:
+                abort(509)
+            except URLError:
+                abort(500)
+        else:
+            LOGGER.info(
+                'Local PBF file detected. We will not use the Overpass API.')
+            file_handle = open(local_osm_file, 'rb')
+
+    # This is for logging requests so we can see what queries we received
+    date_time = datetime.datetime.now()
+
+    log_data = {
+        'feature_type': feature_type,
+        'qgis_version': qgis_version,
+        'inasafe_version': inasafe_version,
+        'year': date_time.year,
+        'month': date_time.month,
+        'day': date_time.day,
+        'hour': date_time.hour,
+        'minute': date_time.minute,
+        'second': date_time.second
+    }
+    # add keys for SW_lng, SW_lat, NE_lng, etc.
+    # to our log and write the log file out...
+    log_data.update(coordinates)
+    log_file_name = (
+        '{year}{month}{day}-{hour}{minute}{second}.geojson').format(**log_data)
+    log_path = os.path.join(config.LOG_DIR, log_file_name)
+    # Note that all the double {{ will be rendered as single below
+    # They need to be double so that python does not confuse them as
+    # string interpolators
+    log_message = """
+    {{
+        "type": "FeatureCollection",
+        "features": [
+            {{
+                "type": "Feature",
+                "properties": {{
+                    "feature_type": "{feature_type}",
+                    "qgis_version": "{qgis_version}",
+                    "inasafe_version": "{inasafe_version}",
+                    "year": {year},
+                    "month": {month},
+                    "day": {day},
+                    "hour": {hour}
+                }},
+                "geometry": {{
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [
+                                {SW_lng},
+                                {NE_lat}
+                            ],
+                            [
+                                {NE_lng},
+                                {NE_lat}
+                            ],
+                            [
+                                {NE_lng},
+                                {SW_lat}
+                            ],
+                            [
+                                {SW_lng},
+                                {SW_lat}
+                            ],
+                            [
+                                {SW_lng},
+                                {NE_lat}
+                            ]
+                        ]
+                    ]
+                }}
+            }}
+        ]
+    }}""".format(**log_data)
+    log_file = open(log_path, "w")
+    log_file.write(log_message)
+    log_file.close()
 
     try:
         # noinspection PyUnboundLocalVariable
@@ -150,7 +242,7 @@ def download_feature(feature_type):
             inasafe_version,
             lang)
 
-        f = open(zip_file)
+        f = open(zip_file, 'rb')
     except IOError:
         abort(404)
         return
@@ -190,7 +282,7 @@ def user_status():
         except OverpassBadRequestException:
             error = "Bad request."
             LOGGER.exception(error + str(coordinates))
-        except urllib2.URLError:
+        except URLError:
             error = "Bad request."
             LOGGER.exception(error + str(coordinates))
         else:

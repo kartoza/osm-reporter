@@ -1,5 +1,8 @@
 # coding=utf-8
-"""This is the main package for the application.
+
+"""
+This is the main package for the application.
+
 :copyright: (c) 2013 by Tim Sutton
 :license: GPLv3, see LICENSE for more details.
 """
@@ -52,10 +55,11 @@ def setup_logger():
     file_handler.setLevel(default_handler_level)
     # create console handler with a higher log level
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.ERROR)
+    console_handler.setLevel(logging.DEBUG)
 
     try:
         # pylint: disable=F0401
+        # noinspection PyUnresolvedReferences
         from raven.handlers.logging import SentryHandler
         # noinspection PyUnresolvedReferences
         from raven import Client
@@ -88,4 +92,4 @@ app = Flask(__name__)
 # http://flask.pocoo.org/docs/patterns/packages/#larger-applications
 # Also views must be imported AFTER app is created above.
 # noinspection PyUnresolvedReferences
-import views
+from reporter import views

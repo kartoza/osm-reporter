@@ -12,11 +12,11 @@ import time
 from datetime import date, timedelta
 import zipfile
 
-import config
-from .osm_node_parser import OsmNodeParser
-from .osm_way_parser import OsmParser
-from queries import RESOURCES_MAP
-from . import LOGGER
+from reporter import config
+from reporter.osm_node_parser import OsmNodeParser
+from reporter.osm_way_parser import OsmParser
+from reporter.queries import RESOURCES_MAP
+from reporter import LOGGER
 
 
 def overpass_resource_base_path(feature_type):
@@ -144,7 +144,7 @@ def osm_object_contributions(osm_file, tag_name):
         }
     :rtype: list
     """
-    parser = OsmParser(tagName=tag_name)
+    parser = OsmParser(tag_name=tag_name)
     try:
         xml.sax.parse(osm_file, parser)
     except xml.sax.SAXParseException:
@@ -159,7 +159,7 @@ def osm_object_contributions(osm_file, tag_name):
     crew_list = config.CREW
     user_list = []
 
-    for key, value in way_count_dict.iteritems():
+    for key, value in way_count_dict.items():
         crew_flag = False
         if key in crew_list:
             crew_flag = True
@@ -248,11 +248,12 @@ def average_for_active_days(timeline):
     """
     count = 0
     total = 0
-    for value in timeline.values():
+    for value in list(timeline.values()):
         if value > 0:
             count += 1
             total += value
-    average = total / count
+    # Python 3 seems to automagically turn integer maths into float if needed
+    average = int(total / count)
     return average
 
 
@@ -267,7 +268,7 @@ def best_active_day(timeline):
     :rtype: int
     """
     best = 0
-    for value in timeline.values():
+    for value in list(timeline.values()):
         if value > best:
             best = value
     return best
@@ -285,8 +286,8 @@ def worst_active_day(timeline):
     """
     if len(timeline) < 1:
         return 0
-    worst = timeline.values()[0]
-    for value in timeline.values():
+    worst = list(timeline.values())[0]
+    for value in list(timeline.values()):
         if value == 0:  # should never be but just in case
             continue
         if value < worst:
@@ -426,7 +427,7 @@ def temp_dir(sub_dir='work'):
         # Umask sets the new mask and returns the old
         old_mask = os.umask(0000)
         try:
-            os.makedirs(path, 0777)
+            os.makedirs(path, 0o0777)
         except OSError:
             # one of the directories in the path already exists maybe
             pass
@@ -482,7 +483,7 @@ def unique_filename(**kwargs):
         # Umask sets the new mask and returns the old
         umask = os.umask(0000)
         # Ensure that the dir is world writable by explictly setting mode
-        os.makedirs(kwargs['dir'], 0777)
+        os.makedirs(kwargs['dir'], 0o0777)
         # Reinstate the old mask for tmp dir
         os.umask(umask)
         # Now we have the working dir set up go on and return the filename
@@ -567,7 +568,7 @@ def which(name, flags=os.X_OK):
     :param flags: Arguments to L{os.access}.
 
     :rtype: C{list}
-    :param: A list of the full paths to files found, in the
+    :param: A list of the full paths for files found, in the
     order in which they were found.
     """
     if os.path.exists('/usr/bin/%s' % name):
@@ -585,6 +586,9 @@ def which(name, flags=os.X_OK):
     # adding it back here in case the user's path does not include the
     # gdal binary dir on OSX but it is actually there. (TS)
     if sys.platform == 'darwin':  # Mac OS X
+        postgis_prefix = (
+            '/Applications/Postgres.app/Contents/Versions/9.4/bin/')
+        path = '%s:%s' % (path, postgis_prefix)
         gdal_prefix = (
             '/Library/Frameworks/GDAL.framework/'
             'Versions/1.10/Programs/')

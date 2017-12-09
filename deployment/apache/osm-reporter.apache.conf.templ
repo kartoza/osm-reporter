@@ -4,7 +4,7 @@
 
   WSGIDaemonProcess osm-reporter user=osm-reporter group=osm-reporter threads=5
   processes=2 python-path=/home/web/osm-reporter/python/lib/python2.7/site-packages
-  WSGIScriptAlias / /home/web/osm-reporter/apache/osm-reporter.wsgi
+  WSGIScriptAlias / /home/web/osm-reporter/deployment/apache/osm-reporter.wsgi
 
   WSGIProcessGroup osm-reporter
   WSGIApplicationGroup %{GLOBAL}

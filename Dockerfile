@@ -1,5 +1,5 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM python:2.7.8
+FROM python:3.6
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 RUN  export DEBIAN_FRONTEND=noninteractive
@@ -18,9 +18,9 @@ RUN apt-get -y install osm2pgsql
 ADD requirements.txt /requirements.txt
 RUN pip install -r requirements.txt
 
+ADD reporter /reporter
+
 ADD server.py /server.py
-# we will use a volume rather
-#ADD reporter /reporter
 
 # Open port 8080 so linked containers can see them
 EXPOSE 8080
