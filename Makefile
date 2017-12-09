@@ -13,6 +13,13 @@ run:
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) up -d web
 
+log:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Showing flask logs in production mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) logs -t web
+
 build:
 	@echo
 	@echo "------------------------------------------------------------------"
@@ -77,6 +84,26 @@ build-dev:
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) build dev
 
+log-dev:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Showing flask logs in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) logs -t dev
+
+kill-dev:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Killing in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) kill dev
+
+rm-dev: kill-dev
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Removing in development mode"
+	@echo "------------------------------------------------------------------"
+	@docker-compose -p $(PROJECT_ID) rm dev
 
 run-dev:
 	@echo
@@ -85,10 +112,3 @@ run-dev:
 	@echo "You can access it on http://localhost:64002"
 	@echo "------------------------------------------------------------------"
 	@docker-compose -p $(PROJECT_ID) up -d dev
-
-log:
-	@echo
-	@echo "------------------------------------------------------------------"
-	@echo "Showing flask logs in development mode"
-	@echo "------------------------------------------------------------------"
-	@docker-compose -p $(PROJECT_ID) logs dev

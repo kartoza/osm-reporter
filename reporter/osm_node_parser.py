@@ -1,5 +1,8 @@
 # coding=utf-8
-"""Module for parsing nodes from OSM xml documents.
+
+"""
+Module for parsing nodes from OSM xml documents.
+
 :copyright: (c) 2013 by Tim Sutton
 :license: GPLv3, see LICENSE for more details.
 """
@@ -19,10 +22,8 @@ class OsmNodeParser(sax.ContentHandler):
 
         :returns: An OsmNodeParser instance.
         :rtype: OsmNodeParser
-
-        Raises:
-            None
         """
+        super().__init__()
         self.username = username
         # A collection of nodes that have been found for a user.
         self.nodes = []
@@ -39,5 +40,6 @@ class OsmNodeParser(sax.ContentHandler):
         """
         if name == 'node':
             if attributes.getValue('user') == self.username:
-                self.nodes.append((float(attributes.getValue('lat')),
-                                   float(attributes.getValue('lon'))))
+                self.nodes.append((
+                    float(attributes.getValue('lat')),
+                    float(attributes.getValue('lon'))))

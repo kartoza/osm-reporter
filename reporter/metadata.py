@@ -6,7 +6,7 @@
 import os
 import re
 
-from utilities import shapefile_resource_base_path, short_version
+from reporter.utilities import shapefile_resource_base_path, short_version
 
 
 def latest_xml_metadata_file(feature):
@@ -23,7 +23,7 @@ def latest_xml_metadata_file(feature):
     directory = os.path.dirname(os.path.abspath(base_path))
     files = os.listdir(directory)
     resource = os.path.basename(base_path)
-    regexp = '^%s-(\d.\d)-en.xml' % resource
+    regexp = r'^%s-(\d.\d)-en.xml' % resource
 
     max_version = None
     for one_file in files:
@@ -113,9 +113,7 @@ def metadata_files(version, lang, feature, output_prefix):
     if version is None:
         # no inasafe_version supplied, provide legacy keywords.
         files = {
-            '%s.keywords' % output_prefix: keyword_file,
-            # Problem with InaSAFE 3.0 and 3.1.
-            # '%s.xml' % output_prefix: xml_file
+            '%s.xml' % output_prefix: xml_file
         }
     elif version < 3.2:
         # keywords only.

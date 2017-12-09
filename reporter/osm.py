@@ -1,33 +1,47 @@
 # coding=utf-8
-"""Module for low level OSM file retrieval.
+
+"""
+Module for low level OSM file retrieval.
+
 :copyright: (c) 2013 by Tim Sutton
 :license: GPLv3, see LICENSE for more details.
 """
+
 import hashlib
-import urllib2
-import urllib
 import time
 import os
 import re
+import sys
+import datetime
 from subprocess import call
 from shutil import copyfile
-
-from .utilities import temp_dir, unique_filename, zip_shp, which
-from . import config
-from . import LOGGER
-from queries import SQL_QUERY_MAP, OVERPASS_QUERY_MAP
-from utilities import (
+from reporter.utilities import temp_dir, unique_filename, zip_shp, which
+from reporter import config
+from reporter import LOGGER
+from reporter.queries import SQL_QUERY_MAP, OVERPASS_QUERY_MAP
+from reporter.utilities import (
     shapefile_resource_base_path,
     overpass_resource_base_path,
     generic_shapefile_base_path)
-from exceptions import (
+from reporter.exceptions import (
     OverpassTimeoutException,
     OverpassBadRequestException,
     OverpassConcurrentRequestException)
-from metadata import metadata_files
+from reporter.metadata import metadata_files
+from urllib.request import urlopen
+# noinspection PyPep8Naming
+from urllib.request import Request
+from urllib.parse import quote
+# noinspection PyPep8Naming
+from urllib.error import HTTPError
 
 
-def get_osm_file(coordinates, feature='all', overpass_verbosity='body'):
+def get_osm_file(
+        coordinates,
+        feature='all',
+        overpass_verbosity='body',
+        date_from=None,
+        date_to=None):
     """Fetch an osm file given a bounding box using the overpass API.
 
     :param coordinates: Coordinates as a list in the form:
@@ -40,6 +54,12 @@ def get_osm_file(coordinates, feature='all', overpass_verbosity='body'):
     :param overpass_verbosity: Output verbosity in Overpass.
         It can be body, skeleton, ids_only or meta.
     :type overpass_verbosity: str
+
+    :param date_from: First date for date range.
+    :type date_from: str
+
+    :param date_to: Second date for date range.
+    :type date_to: str
 
     :returns: A file which has been opened on the retrieved OSM dataset.
     :rtype: file
@@ -74,9 +94,25 @@ def get_osm_file(coordinates, feature='all', overpass_verbosity='body'):
     parameters = coordinates
     parameters['print_mode'] = overpass_verbosity
     query = OVERPASS_QUERY_MAP[feature].format(**parameters)
-    encoded_query = urllib.quote(query)
+
+    if date_from and date_to:
+        try:
+            datetime_from = datetime.datetime.utcfromtimestamp(
+                float(date_from) / 1000.)
+            datetime_to = datetime.datetime.utcfromtimestamp(
+                float(date_to) / 1000.)
+            date_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+            diff_query = '[diff:"{date_from}", "{date_to}"];'.format(
+                date_from=datetime_from.strftime(date_format),
+                date_to=datetime_to.strftime(date_format)
+            )
+            query = diff_query + query
+        except ValueError as e:
+            LOGGER.debug(e)
+
+    encoded_query = quote(query)
     url_path = '%s%s' % (server_url, encoded_query)
-    safe_name = hashlib.md5(query).hexdigest() + '.osm'
+    safe_name = hashlib.md5(query.encode('utf-8')).hexdigest() + '.osm'
     file_path = os.path.join(config.CACHE_DIR, safe_name)
     return load_osm_document(file_path, url_path)
 
@@ -86,7 +122,7 @@ def load_osm_document(file_path, url_path):
 
     To save bandwidth the file is not downloaded if it is less than 1 hour old.
 
-    :type file_path: object
+    :type file_path: basestring
     :param file_path: The path on the filesystem to which the file should
         be saved.
 
@@ -132,18 +168,18 @@ def fetch_osm(file_path, url_path):
     """
     LOGGER.debug('Getting URL: %s', url_path)
     headers = {'User-Agent': 'InaSAFE'}
-    request = urllib2.Request(url_path, None, headers)
+    web_request = Request(url_path, None, headers)
     try:
-        url_handle = urllib2.urlopen(request, timeout=60)
-        data = url_handle.read()
+        url_handle = urlopen(web_request, timeout=60)
+        data = url_handle.read().decode('utf-8')
         regex = '<remark> runtime error:'
         if re.search(regex, data):
             raise OverpassTimeoutException
 
-        file_handle = file(file_path, 'wb')
-        file_handle.write(data)
+        file_handle = open(file_path, 'wb')
+        file_handle.write(data.encode('utf-8'))
         file_handle.close()
-    except urllib2.URLError as e:
+    except HTTPError as e:
         if e.code == 400:
             LOGGER.exception('Bad request to Overpass')
             raise OverpassBadRequestException
@@ -166,8 +202,9 @@ def add_metadata_timestamp(metadata_file_path):
     extension = os.path.splitext(metadata_file_path)[1]
 
     if extension == 'keywords':
-        keyword_file = file(metadata_file_path, 'ab')
-        keyword_file.write('date: %s' % time_stamp)
+        keyword_file = open(metadata_file_path, 'ab')
+        content = 'date: %s' % time_stamp
+        keyword_file.write(content.encode('utf-8'))
         keyword_file.close()
     else:
         # Need to write this section : write date/time in XML file
@@ -272,7 +309,7 @@ def import_osm_file(db_name, feature_type, file_path):
     createdb_command = '%s -T template_postgis %s' % (
         createdb_executable, db_name)
     osm2pgsql_executable = which('osm2pgsql')[0]
-    osm2pgsql_options = config.OSM2PGSQL_OPTIONS.encode(encoding='utf-8')
+    osm2pgsql_options = config.OSM2PGSQL_OPTIONS
     osm2pgsql_command = '%s -S %s -d %s %s %s' % (
         osm2pgsql_executable,
         style_file,
@@ -283,22 +320,23 @@ def import_osm_file(db_name, feature_type, file_path):
     transform_command = '%s %s -f %s' % (
         psql_executable, db_name, transform_path)
 
-    print createdb_command
+    LOGGER.info(createdb_command)
     call(createdb_command, shell=True)
-    print osm2pgsql_command
+    LOGGER.info(osm2pgsql_command)
     call(osm2pgsql_command, shell=True)
-    print transform_command
+    LOGGER.info(transform_command)
     call(transform_command, shell=True)
 
 
 def drop_database(db_name):
     """Remove a database.
+
     :param db_name: The database
     :type db_name: str
     """
     dropdb_executable = which('dropdb')[0]
     dropdb_command = '%s %s' % (dropdb_executable, db_name)
-    print dropdb_command
+    LOGGER.info(dropdb_command)
     call(dropdb_command, shell=True)
 
 
@@ -348,9 +386,7 @@ def extract_shapefile(
 
     :returns: Path to zipfile that was created.
     :rtype: str
-
     """
-
     # Extract
     os.makedirs(directory_name)
     shapefile_resource_path = shapefile_resource_base_path(feature_type)
@@ -378,14 +414,14 @@ def extract_shapefile(
         pgsql2shp_executable, shape_path, db_name, SQL_QUERY_MAP[feature_type])
 
     # Now run the commands in sequence:
-    print pgsql2shp_command
+    LOGGER.info(pgsql2shp_command)
     call(pgsql2shp_command, shell=True)
     copyfile(qml_source_path, qml_dest_path)
 
     metadata = metadata_files(
         inasafe_version, lang, feature_type, output_prefix)
 
-    for destination, source in metadata.iteritems():
+    for destination, source in metadata.items():
         source_path = '%s%s' % (shapefile_resource_path, source)
         destination_path = os.path.join(directory_name, destination)
         copyfile(source_path, destination_path)
@@ -396,9 +432,11 @@ def extract_shapefile(
     copyfile(license_source_path, license_dest_path)
 
     # Now zip it up and return the path to the zip, removing the original shp
-    zipfile = zip_shp(shape_path, extra_ext=[
-        '.qml', '.keywords', '.license', '.xml'], remove_file=True)
-    print 'Shape written to %s' % shape_path
+    zipfile = zip_shp(
+        shape_path,
+        extra_ext=['.qml', '.keywords', '.license', '.xml'],
+        remove_file=True)
+    LOGGER.info('Shape written to {path}'.format(path=shape_path))
 
     return zipfile
 
