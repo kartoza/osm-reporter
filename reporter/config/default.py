@@ -27,3 +27,17 @@ LOG_DIR = os.environ.get('LOG_DIR') \
 # Options for the osm2pgsql command line
 OSM2PGSQL_OPTIONS = os.environ.get('OSM2PGSQL_OPTIONS') \
     if os.environ.get('OSM2PGSQL_OPTIONS', False) else ''
+
+# OSMGIF env variables
+# GIF_DIR = os.path.dirname(os.path.abspath(__file__))
+# where to store the gif so it's accessible trough a web browser
+GIF_PATH = os.path.dirname(
+  os.path.realpath(__file__)) + '/../static/gif/'
+# zoom 
+ZOOM_LEVEL = '15' # 15 is big
+# working directory
+TMP_PATH = CACHE_DIR + '/osm-gif/'
+# datamap file
+DATAMAP = TMP_PATH + "datamapfile"
+# executables directory
+BIN_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../animate/bin/'
