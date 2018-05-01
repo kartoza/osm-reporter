@@ -1,6 +1,7 @@
 import os
 from reporter import config
 
+
 class Pathor:
     """
     Pathor Object

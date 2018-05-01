@@ -3,14 +3,13 @@ from reporter.test.logged_unittest import LoggedTestCase
 from reporter.test.helpers import (
     SWELLENDAM_OSMFILE_PATH
 )
-
 from reporter.animate.osm_gif import (
     OsmGif,
     osm_to_gif
 )
-
 # from reporter.utilities import LOGGER
 from reporter import config
+
 
 class OsmGifTestCase(LoggedTestCase):
     def test_init(self):

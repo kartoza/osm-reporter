@@ -5,8 +5,9 @@ from reporter.animate.util import (
     format_timestamp,
     mkdir_tmp
 )
-#from reporter.utilities import LOGGER
+# from reporter.utilities import LOGGER
 from reporter import config
+
 
 class OsmData:
     """ OsmData object to store data from the OSM file:
@@ -43,7 +44,7 @@ class OsmData:
         :rtype: set
         """
         return sorted(set(map(
-            lambda way: 
+            lambda way:
             format_timestamp(way['timestamp']), self.ways
         )))
 
@@ -91,6 +92,7 @@ class OsmData:
             lambda way:
             frame == format_timestamp(way['timestamp']), self.ways
         ))
+
 
 def snap_datamap(osm_file):
     mkdir_tmp()

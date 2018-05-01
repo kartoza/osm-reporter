@@ -8,6 +8,7 @@ from reporter.animate.frame import (
 )
 # from reporter.utilities import LOGGER
 
+
 class OsmGif:
     """
     OsmGif transforms an OSM file into a GIF file
@@ -48,6 +49,7 @@ class OsmGif:
 
         # build the final gif
         build_gif(self.gif_file)
+
 
 def osm_to_gif(osm_file):
     """

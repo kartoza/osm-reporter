@@ -4,14 +4,13 @@ from reporter.test.helpers import (
     UNKNOWN_OSMFILE_PATH,
     SWELLENDAM_OSMFILE_PATH
 )
-
 from reporter.animate.osm_data import (
     OsmData,
     snap_datamap
 )
-
 # from reporter.utilities import LOGGER
 from reporter import config
+
 
 class OsmDataTestCase(LoggedTestCase):
 
@@ -70,8 +69,11 @@ class OsmDataTestCase(LoggedTestCase):
 
         frame = '2010-01'
         coordinates = data.filter_coordinates_for_frame(frame)
+        expected_coordinates = '-34.029976,20.431830 -34.030593,20.432838' + \
+            ' -34.030990,20.433494 // id=47587914;highway=residential;' + \
+            'name=Maynier Street\n'
         self.assertEqual(len(coordinates), 9)
-        self.assertEqual(coordinates[0], "-34.029976,20.431830 -34.030593,20.432838 -34.030990,20.433494 // id=47587914;highway=residential;name=Maynier Street\n")
+        self.assertEqual(coordinates[0], expected_coordinates)
 
     def test_frames(self):
         """
@@ -95,7 +97,13 @@ class OsmDataTestCase(LoggedTestCase):
         self.assertTrue(os.path.exists(config.DATAMAP))
 
         # check the datamap file's first line
-        self.assertEqual(datamap[0], "-34.026440,20.448198 -34.026266,20.448653 -34.025996,20.449497 -34.025467,20.451333 -34.024931,20.453213 -34.024680,20.454165 -34.024562,20.454708 -34.024493,20.455156 -34.024379,20.456064 -34.024148,20.458149 // id=4361694;highway=trunk;oneway=no;ref=N2\n")
+        expected_datamap = '-34.026440,20.448198 -34.026266,20.448653 ' + \
+            '-34.025996,20.449497 -34.025467,20.451333' + \
+            ' -34.024931,20.453213 -34.024680,20.454165' + \
+            ' -34.024562,20.454708 -34.024493,20.455156 ' + \
+            '-34.024379,20.456064 -34.024148,20.458149' + \
+            ' // id=4361694;highway=trunk;oneway=no;ref=N2\n'
+        self.assertEqual(datamap[0], expected_datamap)
 
     def test_snap_datamap_from_unkwnwn_osm_file(self):
         """

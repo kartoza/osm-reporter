@@ -3,6 +3,7 @@ from reporter.test.logged_unittest import LoggedTestCase
 from reporter import config
 from reporter.animate.pathor import Pathor
 
+
 class PathorTestCase(LoggedTestCase):
     def test_init(self):
         frame_id = 'pathor-test'

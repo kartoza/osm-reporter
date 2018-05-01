@@ -1,10 +1,10 @@
 import subprocess
 import re
 import os
-
 from reporter import config
 from reporter.animate.pathor import Pathor
 from reporter.utilities import LOGGER
+
 
 class Frame:
 
@@ -38,7 +38,7 @@ class Frame:
         """
         self.osm_data = osm_data
         coordinates = self.osm_data.filter_coordinates_for_frame(self.frame_id)
-        
+
         with open(self.paths.ways, 'w') as frame:
             frame.write(''.join(coordinates))
 
@@ -88,8 +88,8 @@ class Frame:
 
         :returns: None
         """
-        if (os.path.exists(self.paths.encoded_frame)
-                and self.osm_data.bounds != None):
+        if (os.path.exists(self.paths.encoded_frame) and
+                self.osm_data.bounds is not None):
             command1 = '{}render -t 0 -A -- "{}" {}'.format(
                 config.BIN_PATH,
                 self.paths.encoded_frame,
@@ -157,6 +157,7 @@ def build_init_frame():
         frame)
 
     os.system(command)
+
 
 def build_gif(gif_file):
     """ Build the final Gif

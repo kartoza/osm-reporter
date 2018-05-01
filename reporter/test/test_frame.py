@@ -5,17 +5,16 @@ from reporter.test.helpers import (
 )
 # from reporter.utilities import LOGGER
 from reporter import config
-
 from reporter.animate.frame import (
     Frame,
     build_init_frame,
     build_gif
 )
-
 from reporter.animate.osm_data import OsmData
 from reporter.animate.util import (
     mkdir_tmp
 )
+
 
 class FrameTestCase(LoggedTestCase):
     def setUp(self):
@@ -38,7 +37,8 @@ class FrameTestCase(LoggedTestCase):
         self.assertTrue(os.path.exists('{}/ways.txt'.format(working_dir)))
 
         # - create a working directory for the encoded frame
-        self.assertTrue(os.path.exists('{}/encoded_frame/'.format(working_dir)))
+        self.assertTrue(
+            os.path.exists('{}/encoded_frame/'.format(working_dir)))
 
         # - render the image
         self.assertTrue(os.path.exists('{}/image.png'.format(working_dir)))

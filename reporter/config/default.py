@@ -33,8 +33,8 @@ OSM2PGSQL_OPTIONS = os.environ.get('OSM2PGSQL_OPTIONS') \
 # where to store the gif so it's accessible trough a web browser
 GIF_PATH = os.path.dirname(
   os.path.realpath(__file__)) + '/../static/gif/'
-# zoom 
-ZOOM_LEVEL = '15' # 15 is big
+# zoom
+ZOOM_LEVEL = '15'  # 15 is big
 # working directory
 TMP_PATH = CACHE_DIR + '/osm-gif/'
 # datamap file
