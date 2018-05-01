@@ -226,21 +226,27 @@
             window.bbox = map.getBounds().toBBoxString();
             
             $('#animate').click(function() {
-                $('#map').hide();
-                $('#animate').hide();
-                $('#loading').show();
-                $.ajax({
-                    url: 'animate',
-                    data: {
-                        filename: '{{ filename }}'
-                    }
-                }).done(function(result) {
-                    console.log(result['result'])
-                    source = "/static/gif/" + result["result"];
-                    $('#loading').hide();
-                    $('#backtomap').show();
-                    $('#gif').html('<img width="940" height="350" src="' + source + '" />')
-                });
+                var current_bbox = map.getBounds().toBBoxString();
+                
+                if (current_bbox === window.bbox) {
+                    $('#gif').show();
+                    $('#map').hide();
+                    $('#animate').hide();
+                    $('#loading').show();
+                    $.ajax({
+                        url: 'animate',
+                        data: {
+                            filename: '{{ filename }}'
+                        }
+                    }).done(function(result) {
+                        source = "/static/gif/" + result["result"];
+                        $('#loading').hide();
+                        $('#backtomap').show();
+                        $('#gif').html('<img src="' + source + '" />')
+                    });
+                } else {
+                    alert("You must refresh first.");
+                }
             });
             $('#backtomap').click(function() {
                 $('#gif').hide();
