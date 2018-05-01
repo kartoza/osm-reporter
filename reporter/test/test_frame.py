@@ -1,7 +1,11 @@
 import os
 from reporter.test.logged_unittest import LoggedTestCase
 from reporter.test.helpers import (
-    SWELLENDAM_OSMFILE_PATH
+    SWELLENDAM_OSMFILE_PATH,
+    BIG_IMAGE,
+    TMP_BIG_IMAGE,
+    SMALL_IMAGE,
+    TMP_SMALL_IMAGE
 )
 # from reporter.utilities import LOGGER
 from reporter import config
@@ -19,6 +23,57 @@ from reporter.animate.util import (
 class FrameTestCase(LoggedTestCase):
     def setUp(self):
         mkdir_tmp()
+
+    def test_resize_image_when_big(self):
+        """
+        it should resize a big image to 940x350
+        """
+        # new fake frame
+        frame = Frame('frame_id')
+
+        # use a copy of a big image
+        command = 'cp {} {}'.format(BIG_IMAGE, TMP_BIG_IMAGE)
+        os.system(command)
+
+        # change frame's image's path
+        frame.paths.image = TMP_BIG_IMAGE
+
+        # it should be a big image
+        self.assertEqual(frame.width(), '3760')
+
+        frame.resize_image()
+
+        # it should be resized to 940
+        self.assertEqual(frame.width(), '940')
+
+        # remove the resized image
+        command = 'rm {}'.format(TMP_BIG_IMAGE)
+        os.system(command)
+
+    def test_resize_image_when_small(self):
+        """
+        it should resize a small image to 940x350
+        """
+
+        # new fake frame
+        frame = Frame('frame_id')
+
+        # use a copy of a small image
+        command = 'cp {} {}'.format(SMALL_IMAGE, TMP_SMALL_IMAGE)
+        os.system(command)
+
+        frame.paths.image = TMP_SMALL_IMAGE
+
+        self.assertEqual(frame.width(), '469')
+
+        frame.resize_image()
+
+        # 938, 940, same, same
+        self.assertEqual(frame.width(), '938')
+
+        # remove the resized image
+        command = 'rm {}'.format(TMP_SMALL_IMAGE)
+        os.system(command)
 
     def test_build_one_frame(self):
         """

@@ -3,7 +3,7 @@ import re
 import os
 from reporter import config
 from reporter.animate.pathor import Pathor
-from reporter.utilities import LOGGER
+# from reporter.utilities import LOGGER
 
 
 class Frame:
@@ -44,6 +44,7 @@ class Frame:
 
         self.encode_image()
         self.render_image()
+        self.resize_image()
         self.render_label()
         self.render_frame()
 
@@ -104,6 +105,11 @@ class Frame:
             command3 = '> {}'.format(self.paths.image)
 
             os.system('{} {} {}'.format(command1, command2, command3))
+
+    def resize_image(self):
+        command = 'convert {} -resize 940x350 {}'.format(
+            self.paths.image, self.paths.image)
+        os.system(command)
 
     def render_label(self):
         """
