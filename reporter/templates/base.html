@@ -55,12 +55,24 @@
         </div>
 
         <div class="row">
-            <div class="span12" id="map">
+            <div class="span12" id="map"></div>
+            <div class="span12" id="gif"></div>
+            <div class="span12" id="loading" style="display:none;text-align:center">
+                <p style="">
+                    <img src="static/img/loader.gif" />
+                    <br />
+                    Generating the gif ...
+                </p>
+            </div>
+            <div class="offset10 span2">
+                <button type="button" class="btn btn-info" id="animate" style="margin-top:17px; width: 100%">Animate</button>
+            <button type="button" class="btn btn-danger" id="backtomap" style="display:none;margin-top:17px; width: 100%">Back to map</button>
+
             </div>
         </div>
 
         <div class="row date-wrapper">
-            <div class="span12" style="margin-top: -20px;">
+            <div class="span12" >
                 <h2>Filters</h2>
                 <hr/>
             </div>
@@ -212,7 +224,38 @@
                 clickable: false
             }).addTo(map);
             window.bbox = map.getBounds().toBBoxString();
+            
+            $('#animate').click(function() {
+                var current_bbox = map.getBounds().toBBoxString();
+                
+                if (current_bbox === window.bbox) {
+                    $('#gif').show();
+                    $('#map').hide();
+                    $('#animate').hide();
+                    $('#loading').show();
+                    $.ajax({
+                        url: 'animate',
+                        data: {
+                            filename: '{{ filename }}'
+                        }
+                    }).done(function(result) {
+                        source = "/static/gif/" + result["result"];
+                        $('#loading').hide();
+                        $('#backtomap').show();
+                        $('#gif').html('<img src="' + source + '" />')
+                    });
+                } else {
+                    alert("You must refresh first.");
+                }
+            });
+            $('#backtomap').click(function() {
+                $('#gif').hide();
+                $('#map').show();
+                $('#animate').show();
+                $('#backtomap').hide();
+            });
         });
+
         $(function () {
             {# Pie chart for all users #}
             var myData = [

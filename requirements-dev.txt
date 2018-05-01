@@ -5,3 +5,7 @@ pep8
 nosexcover
 nose
 selenium
+bs4
+beautifulsoup4
+python-dateutil
+pycodestyle

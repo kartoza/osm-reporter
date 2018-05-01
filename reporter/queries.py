@@ -91,6 +91,7 @@ POTENTIAL_IDP_OVERPASS_QUERY = (
 )
 
 EVACUATION_CENTERS_OVERPASS_QUERY = (
+    '[bbox: {SW_lat},{SW_lng},{NE_lat},{NE_lng}];'
     '('
     'node["evacuation_center"="yes"]'
     '({SW_lat},{SW_lng},{NE_lat},{NE_lng});'
@@ -103,6 +104,7 @@ EVACUATION_CENTERS_OVERPASS_QUERY = (
     'out {print_mode};')
 
 BUILDINGS_OVERPASS_QUERY = (
+    '[bbox: {SW_lat},{SW_lng},{NE_lat},{NE_lng}];'
     '('
     'node["building"]'
     '({SW_lat},{SW_lng},{NE_lat},{NE_lng});'
@@ -115,6 +117,7 @@ BUILDINGS_OVERPASS_QUERY = (
     'out {print_mode};')
 
 ROADS_OVERPASS_QUERY = (
+    '[bbox: {SW_lat},{SW_lng},{NE_lat},{NE_lng}];'
     '('
     'node["highway"]'
     '({SW_lat},{SW_lng},{NE_lat},{NE_lng});'
@@ -127,6 +130,7 @@ ROADS_OVERPASS_QUERY = (
     'out {print_mode};')
 
 FLOOD_PRONE_OVERPASS_QUERY = (
+    '[bbox: {SW_lat},{SW_lng},{NE_lat},{NE_lng}];'
     '('
     'way["flood_prone"="yes"]'
     '({SW_lat},{SW_lng},{NE_lat},{NE_lng});'

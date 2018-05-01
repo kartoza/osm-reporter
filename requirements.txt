@@ -1,4 +1,6 @@
 flask
 raven
 cherrypy
-
+bs4
+beautifulsoup4
+python-dateutil

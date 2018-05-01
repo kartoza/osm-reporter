@@ -34,6 +34,10 @@ from reporter import LOGGER
 # noinspection PyPep8Naming
 from urllib.error import URLError
 
+from reporter.animate.osm_gif import (
+    osm_to_gif
+)
+
 
 @app.route('/')
 def home():
@@ -91,6 +95,11 @@ def home():
     coordinates = dict((k, repr(v)) for k, v in coordinates.items())
 
     download_url = '%s-shp' % TAG_MAPPING[tag_name]
+    if os.path.isfile(file_handle.name):
+        filename = os.path.basename(file_handle.name)
+    else:
+        filename = ''
+
     context = dict(
         sorted_user_list=sorted_user_list,
         way_count=way_count,
@@ -103,9 +112,20 @@ def home():
         error=error,
         coordinates=coordinates,
         display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
+        filename=filename
     )
     # noinspection PyUnresolvedReferences
     return render_template('base.html', **context)
+
+
+@app.route('/animate')
+def animate_osm():
+
+    file_handle = request.args.get('filename', None)
+    tmp = '{}/{}'.format(config.CACHE_DIR, file_handle)
+    gif_file = osm_to_gif(tmp)
+
+    return jsonify(result=os.path.basename(gif_file))
 
 
 @app.route('/<feature_type>-shp')
