@@ -95,6 +95,11 @@ def home():
     coordinates = dict((k, repr(v)) for k, v in coordinates.items())
 
     download_url = '%s-shp' % TAG_MAPPING[tag_name]
+    if os.path.isfile(file_handle.name):
+        filename = os.path.basename(file_handle.name)
+    else:
+        filename = ''
+
     context = dict(
         sorted_user_list=sorted_user_list,
         way_count=way_count,
@@ -107,7 +112,7 @@ def home():
         error=error,
         coordinates=coordinates,
         display_update_control=int(config.DISPLAY_UPDATE_CONTROL),
-        filename=os.path.basename(file_handle.name)
+        filename=filename
     )
     # noinspection PyUnresolvedReferences
     return render_template('base.html', **context)
