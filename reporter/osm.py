@@ -11,7 +11,6 @@ import hashlib
 import time
 import os
 import re
-import sys
 import datetime
 from subprocess import call
 from shutil import copyfile
@@ -114,6 +113,8 @@ def get_osm_file(
     url_path = '%s%s' % (server_url, encoded_query)
     safe_name = hashlib.md5(query.encode('utf-8')).hexdigest() + '.osm'
     file_path = os.path.join(config.CACHE_DIR, safe_name)
+    # Tidy away any old cached files to prevent the file system filling up
+    clear_osm_cache()
     return load_osm_document(file_path, url_path)
 
 
@@ -149,6 +150,32 @@ def load_osm_document(file_path, url_path):
         LOGGER.info(message)
     file_handle = open(file_path, 'rb')
     return file_handle
+
+
+def clear_osm_cache():
+    """Search for and remove any cached osm files greater than 1 hour old.
+
+    :returns: None
+    :rtype: None
+
+    Raises:
+         None
+    """
+    elapsed_seconds = 0
+    cache_files = os.listdir(config.CACHE_DIR)
+
+    for file_path in cache_files:
+        full_path = os.path.join(config.CACHE_DIR, file_path)
+        filename, extension = os.path.splitext(file_path)
+        if extension == '.osm':
+            current_time = time.time()  # in unix epoch
+            try:
+                file_time = os.path.getmtime(full_path)  # in unix epoch
+            except:  # in case file was removed in the mean time
+                continue
+            elapsed_seconds = current_time - file_time
+            if elapsed_seconds > 3600:
+                os.remove(full_path)
 
 
 def fetch_osm(file_path, url_path):
