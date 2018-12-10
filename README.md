@@ -9,11 +9,6 @@ style for OSM roads and buildings for the area of your choosing.
 
 # Install
 
-# Install via the Kartoza Rancher Catalogue
-
-The easiest way to install is via our [Rancher Catalogue](https://github.com/kartoza/kartoza-rancher-catalogue). When you install Rancher on your host, add our catalogue, you will see osm-reporter in the list of available applications. 
-
-
 # Docker install
 
 This will install and setup a postgis (kartoza/postgis) and an osm-reporter
@@ -327,9 +322,5 @@ tmpfs           799M     0  799M   0% /run/user/0
 root@osm ~/osm-reporter # docker-compose up -d web
 ```
 
-
-
-
-# Credits
 
 Tim Sutton, Etienne Trimaille & Yohan Boniface
