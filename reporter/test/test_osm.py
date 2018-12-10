@@ -5,6 +5,7 @@
 """
 import os
 import datetime
+import time
 
 from reporter.utilities import LOGGER
 from reporter.osm import (
@@ -110,11 +111,12 @@ class OsmTestCase(LoggedTestCase):
         old_file_path = os.path.join(cache_path, 'old_cache.osm')
         old_file = open(old_file_path, "wt")
         old_file.close()
-        current_time = datetime.datetime.now()
-        old_time = current_time - datetime.timedelta(minutes=90)
+        current_datetime = datetime.datetime.now()
+        old_datetime = current_datetime - datetime.timedelta(minutes=90)
+        old_time = time.mktime(old_datetime.timetuple())
         os.utime(old_file_path, (old_time, old_time))
         # contrive a new file
-        new_file_path = os.path.join(cache_path, 'old_cache.osm')
+        new_file_path = os.path.join(cache_path, 'new_cache.osm')
         new_file = open(new_file_path, "wt")
         new_file.close()
         clear_osm_cache()

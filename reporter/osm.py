@@ -165,11 +165,17 @@ def clear_osm_cache():
     cache_files = os.listdir(config.CACHE_DIR)
 
     for file_path in cache_files:
-        current_time = time.time()  # in unix epoch
-        file_time = os.path.getmtime(file_path)  # in unix epoch
-        elapsed_seconds = current_time - file_time
-        if elapsed_seconds > 3600:
-            os.remove(file_path)
+        full_path = os.path.join(config.CACHE_DIR, file_path)
+        filename, extension = os.path.splitext(file_path)
+        if extension == '.osm':
+            current_time = time.time()  # in unix epoch
+            try:
+                file_time = os.path.getmtime(full_path)  # in unix epoch
+            except:  # in case file was removed in the mean time
+                continue
+            elapsed_seconds = current_time - file_time
+            if elapsed_seconds > 3600:
+                os.remove(full_path)
 
 
 def fetch_osm(file_path, url_path):
