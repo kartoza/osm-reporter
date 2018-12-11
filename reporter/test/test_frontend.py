@@ -70,6 +70,7 @@ class TestFrontEnd(LoggedLiveServerTestCase):
         select_feature_type = Select(
             self.driver.find_element_by_id('feature_select'))
         select_feature_type.select_by_visible_text('highway')
+        self.driver.find_element_by_id('refresh-with-date').click()
         time.sleep(1)
 
         text = self.driver.find_element_by_id('report-heading').text
