@@ -4,13 +4,17 @@
 :license: GPLv3, see LICENSE for more details.
 """
 import os
+import datetime
+import time
 
 from reporter.utilities import LOGGER
 from reporter.osm import (
+    clear_osm_cache,
     load_osm_document,
     import_and_extract_shapefile,
     check_string)
 from reporter.test.helpers import FIXTURE_PATH
+from reporter import config
 
 from reporter.test.logged_unittest import LoggedTestCase
 
@@ -99,6 +103,26 @@ class OsmTestCase(LoggedTestCase):
         """Test the roads to shp converter."""
         zip_path = import_and_extract_shapefile('buildings', FIXTURE_PATH)
         self.assertTrue(os.path.exists(zip_path), zip_path)
+
+    def test_clear_osm_cache(self):
+        """Test we can clear the catch properly."""
+        cache_path = config.CACHE_DIR
+        # Contrive an old file which should be cleaned from the cache
+        old_file_path = os.path.join(cache_path, 'old_cache.osm')
+        old_file = open(old_file_path, "wt")
+        old_file.close()
+        current_datetime = datetime.datetime.now()
+        old_datetime = current_datetime - datetime.timedelta(minutes=90)
+        old_time = time.mktime(old_datetime.timetuple())
+        os.utime(old_file_path, (old_time, old_time))
+        # contrive a new file
+        new_file_path = os.path.join(cache_path, 'new_cache.osm')
+        new_file = open(new_file_path, "wt")
+        new_file.close()
+        clear_osm_cache()
+        # Now check the old file is gone and the new file is still there
+        self.assertTrue(os.path.exists(new_file_path))
+        self.assertFalse(os.path.exists(old_file_path))
 
     def test_check_string(self):
         """Test that we can validate for bad strings."""
