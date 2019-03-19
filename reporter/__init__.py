@@ -65,8 +65,8 @@ def setup_logger():
         from raven import Client
         # pylint: enable=F0401
         client = Client(
-            'http://12ef42a1d4394255a2041ac0428e8ef7:'
-            '755880e336f54892bc2a65d308019997@sentry.linfiniti.com/6')
+            'http://2e69dbea35044276bc012ea6749104bd:9efad29f86ed4'
+            '095bebe745959f7194c@sentry.kartoza.com/25')
         sentry_handler = SentryHandler(client)
         sentry_handler.setFormatter(formatter)
         sentry_handler.setLevel(logging.ERROR)
