@@ -5,3 +5,6 @@ pep8
 nosexcover
 nose
 selenium
+flask
+raven
+cherrypy
