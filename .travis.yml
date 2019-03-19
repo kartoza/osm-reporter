@@ -21,7 +21,6 @@ addons:
 # python defs need to be here as well as in include for test matrix
 # see https://docs.travis-ci.com/user/customizing-the-build#Explicitly-Included-Jobs-need-complete-definitions
 python:
-  - '3.7'
   - '3.6'
   - '3.5'
   - '3.4'
@@ -33,7 +32,6 @@ env:
 matrix:
   fast_finish: true
   include:
-    - python: '3.7'
       env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
     - python: '3.6'
       env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
@@ -47,7 +45,6 @@ matrix:
     # see https://github.com/travis-ci/travis-ci/issues/4681#issuecomment-277513723
     # and
     # https://github.com/kartoza/osm-reporter/pull/109#issuecomment-292807417
-    - python: '3.7'
     - python: '3.6'
     - python: '3.5'
     - python: '3.4'
