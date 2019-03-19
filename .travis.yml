@@ -32,6 +32,7 @@ env:
 matrix:
   fast_finish: true
   include:
+      env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
     - python: '3.6'
       env: TRAVIS_CONFIG=PYTHON3 # used if you want to run environment specific stuff in before_script
     - python: '3.5'
@@ -84,7 +85,7 @@ before_script:
   - psql -U postgres -c "create extension postgis"
   - psql -U postgres -c "create database template_postgis encoding 'UTF8' TEMPLATE template0;"
   - psql -U postgres -c "update pg_database set datistemplate=true where datname='template_postgis';"
-  - psql -U postgres -c "create extension postgis;" template_postgis 
+  - psql -U postgres -c "create extension postgis;" template_postgis
   - ls -lah /usr/share/postgresql/
   - ls -lah /usr/share/postgresql/9.5/
   - ls -lah /usr/share/postgresql/9.5/contrib/

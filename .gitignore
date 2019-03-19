@@ -7,3 +7,4 @@ reporter/config/local.py
 components/
 data
 *~
+.DS_Store
