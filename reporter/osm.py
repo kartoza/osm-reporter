@@ -177,7 +177,7 @@ def clear_osm_cache():
             if elapsed_seconds > 3600:
                 os.remove(full_path)
         # Fix #146
-        else if os.path.isdir(full_path):
+        else os.path.isdir(full_path):
             rmtree(full_path)
 
 
