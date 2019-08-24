@@ -13,7 +13,7 @@ import os
 import re
 import datetime
 from subprocess import call
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from reporter.utilities import temp_dir, unique_filename, zip_shp, which
 from reporter import config
 from reporter import LOGGER
@@ -176,6 +176,9 @@ def clear_osm_cache():
             elapsed_seconds = current_time - file_time
             if elapsed_seconds > 3600:
                 os.remove(full_path)
+        # Fix #146
+        else if os.path.isdir(full_path):
+            rmtree(full_path)
 
 
 def fetch_osm(file_path, url_path):
